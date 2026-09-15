@@ -23,7 +23,7 @@ let remote=true; // try backend, fallback local
 /* ---------- i18n ---------- */
 const STR={ 'pt-BR':{kinds:'Simulações',actions:'Ações',run:'Executar',pause:'Pausar'}, en:{kinds:'Simulations',actions:'Actions',run:'Run',pause:'Pause'} };
 let lang=navigator.language.startsWith('pt')?'pt-BR':'en';
-async function setLang(l){ lang=l; try{ const r=await fetch(`../i18n/${l}.json`); if(r.ok){ window.I18N=await r.json(); } }catch(e){} document.documentElement.lang=l; document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n'); if(window.I18N&&window.I18N[k]) el.textContent=window.I18N[k]; }); renderLangButtons(); }
+async function setLang(l){ lang=l; try{ const r=await fetch(`i18n/${l}.json`); if(r.ok){ window.I18N=await r.json(); } }catch(e){} document.documentElement.lang=l; document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n'); if(window.I18N&&window.I18N[k]) el.textContent=window.I18N[k]; }); renderLangButtons(); }
 function renderLangButtons(){ const box=document.getElementById('lang-selector'); box.innerHTML=''; ['pt-BR','en','es','fr','de','ja','zh-CN'].forEach(l=>{ const b=document.createElement('button'); b.textContent=l; if(l===lang)b.classList.add('active'); b.onclick=()=>setLang(l); box.appendChild(b); }); }
 
 /* ---------- local engines (offline fallback) ---------- */
@@ -72,7 +72,9 @@ function updateStats(st){ document.getElementById('stats-box').textContent=`kind
 
 /* ---------- params panel ---------- */
 function renderParams(){ const row=document.getElementById('params-row'); row.innerHTML=''; const p=local.params; Object.keys(p).forEach(k=>{ if(k==='layers'||k==='model'){ const w=document.createElement('div'); w.innerHTML=`<label class="param-label">${k}</label>`; const inp=document.createElement('input'); inp.value=p[k]; inp.style.width='100%'; inp.onchange=()=>{ local.params[k]=k==='model'?inp.value:JSON.parse(inp.value); syncParams(); }; w.appendChild(inp); row.appendChild(w); return; } const v=p[k]; const w=document.createElement('div'); const mn=0, mx=(k==='n'||k==='size')?500:(typeof v==='number'&&v<2?1:20); w.innerHTML=`<label class="param-label">${k}: <b id="pv-${k}">${v}</b></label>`; const s=document.createElement('input'); s.type='range'; s.min=mn; s.max=mx; s.step=(mx-mn)/100; s.value=v; s.className='param-control'; s.oninput=()=>{ const nv=parseFloat(s.value); local.params[k]=(k==='n'||k==='size'||k==='seed')?Math.round(nv):nv; document.getElementById('pv-'+k).textContent=local.params[k]; syncParams(); }; w.appendChild(s); row.appendChild(w); }); }
-async function syncParams(){ if(remote&&simId&&token){ try{ await api(`/api/simulations/${simId}/step`,{method:'POST',body:JSON.stringify({dt:0.016,steps:0})}); }catch(e){} } }
+/* Sem endpoint de update de params no backend: o remoto é recriado ao trocar de kind.
+   Slider move só o motor local; chamada propositalmente inoperante (evita 422). */
+async function syncParams(){ return; }
 function renderKinds(){ const box=document.getElementById('kind-list'); box.innerHTML=''; KINDS.forEach(k=>{ const b=document.createElement('button'); b.className='kind-button'+(k===currentKind?' active':''); b.textContent=k; b.onclick=()=>switchKind(k); box.appendChild(b); }); }
 async function switchKind(k){ currentKind=k; running=false; cancelAnimationFrame(raf); local=new LocalEngine(k,DEFAULTS[k]); renderKinds(); renderParams(); if(token)await ensureRemote(); loop(); }
 
