@@ -40,7 +40,7 @@ class RegisterRequest(BaseModel):
 def _token_response(user) -> dict:
     return {
         "access_token": create_access_token(user.username, user.role),
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec B105 -- OAuth2 token type literal, not a secret
         "role": user.role,
         "username": user.username,
     }
