@@ -58,3 +58,12 @@ python -m http.server 5173 --directory frontend # UI http://localhost:5173
 - Hardening v1 mantido: bounds particles/fluids/bio, CSRF canonical-check, crypto sem fallback em produção, nginx TLS 443+HSTS.
 - Decisões: sem bloqueio SQL por regex (falso-positivo em texto inocente) — `validate_params` + Pydantic + CSP já mitigam; XSS armazenado documentado (JSON não executa; frontend usa `textContent`).
 - Métricas: **34 passed**, TOTAL **85%** (sim_service 47%→61%+), fluidos ~400 steps/s, i18n 7×180 chaves, frontend `node --check` OK.
+
+---
+## 8. Deploy (2026-09-15) — repositório + frontend + API no ar
+- Repo: https://github.com/projectsbywell/complex-sim-platform (master, CI verde)
+- Frontend (Pages): https://projectsbywell.github.io/complex-sim-platform/ (HTTP 200)
+- API (túnel temporário): https://fork-trend-sponsor-rom.trycloudflare.com (`/health`, `/docs`, REST+WS validados fim-a-fim: register→login→create→step→export 200)
+- Backend permanente: `render.yaml` (1 clique no dashboard Render) — túnel cloudflared é temporário e morre com o processo
+- CI: black + flake8 (.flake8, max 120) + bandit -ll + mypy 0 erros + pytest 34 passed/85% + pip-audit/safety escopados (triagem PYSEC-2026-1325: ecdsa/Minerva sem fix upstream, auth usa HS256)
+- Uso: no frontend, configure a base da API com `?api=https://fork-trend-sponsor-rom.trycloudflare.com` (ou campo da sidebar)
