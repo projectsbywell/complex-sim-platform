@@ -30,7 +30,9 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install pip-audit safety
-      - run: pip-audit
+      # PYSEC-2026-1325 (ecdsa/Minerva): sem fix upstream; fora de escopo aqui —
+      # auth usa JWT HS256 (HMAC), nunca ECDSA; ecdsa vem transitivo via python-jose
+      - run: pip-audit -r backend/requirements.txt -r simulation-core/requirements.txt -r pipeline/requirements.txt -r tests/requirements-test.txt --ignore-vuln PYSEC-2026-1325
       - run: safety check -r backend/requirements.txt -r simulation-core/requirements.txt -r tests/requirements-test.txt --short-report
       - run: python security/crypto.py
       - run: python security/audit.py
