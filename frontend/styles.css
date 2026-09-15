@@ -150,7 +150,7 @@ header {
   border-bottom: 1px solid var(--border-color);
 }
 
-/ .kind-button {
+.kind-button {
   width: 100%;
   padding: 0.6rem 1rem;
   margin-bottom: 0.4rem;
@@ -259,7 +259,7 @@ header {
   cursor: pointer;
 }
 
-.param-control input[type "number"] {
+.param-control input[type="number"] {
   width: 100%;
   padding: 0.4rem;
   font-size: 0.85rem;
@@ -361,7 +361,7 @@ button#report-btn { background: var(--danger-color); color: white; border-color:
 /* Responsive */
 @media (max-width: 768px) {
   .sidebar {
-    var(--sidebar-width): 100%;
+    width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
     height: auto;

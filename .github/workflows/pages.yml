@@ -26,6 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: mkdir -p frontend/i18n && cp i18n/*.json frontend/i18n/
+      # injeta a URL pública atual da API como default (cai p/ localhost se ausente)
+      - run: python3 -c "import re,pathlib; u=(__import__('re').search(r'https://[a-z0-9-]+\.trycloudflare\.com', pathlib.Path('docs/LIVE_URL.md').read_text()).group(0) if pathlib.Path('docs/LIVE_URL.md').exists() else ''); p=pathlib.Path('frontend/app.js'); s=p.read_text(); s=s.replace(\"let API = 'http://localhost:8000'\", \"let API = '\"+(u or 'http://localhost:8000')+\"'\"); p.write_text(s); print('API default:', u or 'localhost')"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
