@@ -50,3 +50,11 @@ python -m http.server 5173 --directory frontend # UI http://localhost:5173
 5. **Frontend**: base da API configurável (`?api=` > localStorage > localhost) + campo de configuração na sidebar; WS deriva da mesma base — link público agora pode apontar pro backend.
 
 **Testes:** 19 passed · **Núcleo:** 82% coverage
+
+---
+## 7. Continuação orquestrada v2 (2026-09-15) — 34 passed, 85% global
+- Novo `tests/test_backend_cache_store.py` (8 testes): cache LRU/TTL/evict/decorator/stats (cache 38%→96%), store CRUD+quarentena corrupto (70%→84%), sim_service erros (kind/get/export/work-budget/report), ciclo completo 5 kinds (json/csv/parquet/hdf5/report), mocks diretos + helpers, validate_params inf/nan, smoke throughput.
+- Bug real corrigido: `sim_service._state_frame` crashava com `float(list)` em estados aninhados (TypeError linha 764) — agora converte com segurança para NaN.
+- Hardening v1 mantido: bounds particles/fluids/bio, CSRF canonical-check, crypto sem fallback em produção, nginx TLS 443+HSTS.
+- Decisões: sem bloqueio SQL por regex (falso-positivo em texto inocente) — `validate_params` + Pydantic + CSP já mitigam; XSS armazenado documentado (JSON não executa; frontend usa `textContent`).
+- Métricas: **34 passed**, TOTAL **85%** (sim_service 47%→61%+), fluidos ~400 steps/s, i18n 7×180 chaves, frontend `node --check` OK.

@@ -758,12 +758,16 @@ class SimulationService:
                 ):
                     frame[key] = [float(v) for v in value]
                 elif value and all(isinstance(v, list) for v in value):
-                    width = len(value[0])
+                    width = len(value[0]) if value[0] else 0
                     for j in range(width):
-                        frame[f"{key}_{j}"] = [
-                            float(row[j]) if j < len(row) else float("nan")
-                            for row in value
-                        ]
+                        col = []
+                        for row in value:
+                            try:
+                                v = row[j] if j < len(row) else float("nan")
+                                col.append(float(v) if not isinstance(v, (list, dict)) else float("nan"))
+                            except (TypeError, ValueError):
+                                col.append(float("nan"))
+                        frame[f"{key}_{j}"] = col
                 elif value and all(isinstance(v, dict) for v in value):
                     # list of row-dicts (e.g. physics "bodies") -> one column per field
                     field_keys = sorted({fk for row in value for fk in row.keys()})
