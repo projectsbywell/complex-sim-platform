@@ -1,0 +1,21 @@
+# complex-sim-platform backend
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29
+pydantic>=2.6
+python-multipart>=0.0.9
+
+# JWT auth
+python-jose[cryptography]>=3.3
+# bcrypt direto (passlib 1.7.4 removido: incompatível com bcrypt>=4.1)
+bcrypt>=4.1
+
+# ops / export
+PyYAML>=6.0
+pandas>=2.0
+pyarrow>=14.0
+h5py>=3.10
+numpy>=1.26
+
+# (optional) when switching to a real database behind DATABASE_URL:
+# psycopg[binary]>=3.1      # Postgres / Timescale
+# pymongo>=4.6              # MongoDB

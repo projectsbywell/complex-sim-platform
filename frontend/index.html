@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComplexSim — Plataforma de Simulação</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-container">
+<header>
+<div class="header-left">
+<h1 class="app-name">⚛ ComplexSim</h1>
+<div class="language-selector" id="lang-selector"></div>
+<button id="theme-btn" class="btn" title="Tema">🌙</button>
+</div>
+<div class="header-right">
+<div id="login-area" class="login-button">
+<input id="user-input" placeholder="user" style="width:90px;padding:.5rem">
+<input id="pass-input" type="password" placeholder="pass" style="width:90px;padding:.5rem">
+<button id="login-btn">Login</button>
+</div>
+<div id="user-area" style="display:none"><span id="user-name"></span> <button id="logout-btn" class="btn">Logout</button></div>
+</div>
+</header>
+<div class="main-layout" style="display:flex">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-section"><h4 data-i18n="kinds">Simulações</h4><div id="kind-list"></div></div>
+<div class="sidebar-section"><h4 data-i18n="actions">Ações</h4>
+<button id="step-btn" class="btn">⏭ Step</button>
+<button id="run-btn" class="btn primary">▶ Run</button>
+<button id="pause-btn" class="btn warning">⏸ Pause</button>
+<button id="reset-btn" class="btn">↺ Reset</button></div>
+<div class="sidebar-section"><h4 data-i18n="persistence">Persistência</h4>
+<button id="save-btn" class="btn">💾 Save</button>
+<button id="load-btn" class="btn">📂 Load</button>
+<input type="file" id="load-file" accept=".json" style="display:none">
+<button id="export-btn" class="btn">📤 Export</button>
+<select id="export-fmt"><option value="csv">CSV</option><option value="json" selected>JSON</option><option value="parquet">Parquet</option><option value="hdf5">HDF5</option></select>
+<button id="report-btn" class="btn danger">📊 Report</button></div>
+<div class="sidebar-section"><h4>Status</h4><div id="status-box" style="font-size:.8rem">offline • local engine</div><div id="stats-box" style="font-size:.8rem"></div></div>
+</aside>
+<main class="main-content">
+<div class="canvas-wrapper" style="height:55vh;min-height:380px"><canvas id="simulation-canvas" width="900" height="520"></canvas></div>
+<div class="param-panel" id="param-panel" style="margin:1rem 0"><h5 id="params-title">Parameters</h5><div class="param-row" id="params-row"></div></div>
+<div class="param-panel"><h5>Report</h5><pre id="report-box" style="white-space:pre-wrap;font-size:.8rem;max-height:260px;overflow:auto">—</pre><canvas id="chart-canvas" width="900" height="180" style="width:100%;border:1px solid var(--border-color);border-radius:6px"></canvas></div>
+</main>
+</div>
+</div>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

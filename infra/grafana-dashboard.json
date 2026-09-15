@@ -1,0 +1,136 @@
+{
+  "title": "ComplexSim Platform Overview",
+  "panels": [
+    {
+      "title": "Steps/s by Kind",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(sim_steps_total[1m])",
+          "legendFormat": "{{kind}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "unit": "ops/s"
+      }
+    },
+    {
+      "title": "API Latency p95",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "unit": "s"
+      }
+    },
+    {
+      "title": "WebSocket Clients",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sim_ws_connections_current"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "title": "Active Simulations",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sim_active_count"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      }
+    },
+    {
+      "title": "Error Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\"}[1m])",
+          "legendFormat": "errors"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "unit": "ops/s"
+      }
+    },
+    {
+      "title": "Memory Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "fieldConfig": {
+        "unit": "bytes"
+      }
+    },
+    {
+      "title": "GPU Utilization",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "nvidia_gpu_utilization"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "fieldConfig": {
+        "unit": "percent"
+      },
+      "transparent": true
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "15s",
+  "schemaVersion": 38,
+  "uid": "complexsim-overview"
+}

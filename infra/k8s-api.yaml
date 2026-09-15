@@ -1,0 +1,250 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complexsim-api
+  labels:
+    app: complexsim-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: complexsim-api
+  template:
+    metadata:
+      labels:
+        app: complexsim-api
+    spec:
+      containers:
+        - name: api
+          image: complexsim-api:1.0.0
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://sim:sim@postgres-sim:5432/simdb"
+            - name: REDIS_URL
+              value: "redis://redis-sim:6379"
+            - name: SIMCORE_PATH
+              value: /app/simulation-core
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: complexsim-api
+  labels:
+    app: complexsim-api
+spec:
+  type: ClusterIP
+  selector:
+    app: complexsim-api
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complexsim-frontend
+  labels:
+    app: complexsim-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: complexsim-frontend
+  template:
+    metadata:
+      labels:
+        app: complexsim-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: complexsim-frontend:1.0.0
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: complexsim-frontend
+  labels:
+    app: complexsim-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: complexsim-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complexsim-postgres
+  labels:
+    app: complexsim-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: complexsim-postgres
+  template:
+    metadata:
+      labels:
+        app: complexsim-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: timescale/timescaledb:latest-pg16
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: sim
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sim-secret
+                  key: password
+            - name: POSTGRES_DB
+              value: simdb
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "1024Mi"
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: sim-pg-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-sim
+  labels:
+    app: complexsim-postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: complexsim-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complexsim-redis
+  labels:
+    app: complexsim-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: complexsim-redis
+  template:
+    metadata:
+      labels:
+        app: complexsim-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          command: ["redis-server", "--appendonly", "yes"]
+          volumeMounts:
+            - name: redisdata
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sim
+  labels:
+    app: complexsim-redis
+spec:
+  type: ClusterIP
+  selector:
+    app: complexsim-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: complexsim-grafana
+  labels:
+    app: complexsim-grafana
+spec:
+  type: LoadBalancer
+  selector:
+    app: complexsim-grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sim-env-config
+data:
+  SIMCORE_PATH: "/app/simulation-core"
+  LOG_LEVEL: "INFO"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sim-secret
+type: Opaque
+data:
+  password: c2ltc2VjcmV0  # base64 of "simssecret"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sim-pg-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

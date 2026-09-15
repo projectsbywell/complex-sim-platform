@@ -1,0 +1,5 @@
+numpy>=1.24.0
+# Standard library modules are sufficient for core pipeline;
+# numpy is the only external dependency required.
+# For optional GPU acceleration, install: jax or numba
+# For distributed computing, install: dask or ray

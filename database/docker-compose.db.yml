@@ -1,0 +1,97 @@
+# docker-compose.db.yml — Complex Sim Platform DB stack
+# Uso: docker compose -f docker-compose.db.yml up -d
+# Requer .env com senhas (não comitar segredos)
+name: complex-sim-db
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: complex-sim-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sim_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-complex_sim}
+      TIMESCALEDB_TELEMETRY: "off"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./migrations:/migrations:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sim_user} -d ${POSTGRES_DB:-complex_sim}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [simnet]
+
+  mongo:
+    image: mongo:7
+    container_name: complex-sim-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-changeme}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-complex_sim}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+      - mongoconfig:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [simnet]
+
+  minio:
+    image: minio/minio:latest
+    container_name: complex-sim-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changeme123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks: [simnet]
+
+  # Opcional: cria bucket sim-artifacts no boot (requer mc)
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-changeme123} &&
+      /usr/bin/mc mb --ignore-existing local/sim-artifacts &&
+      /usr/bin/mc version enable local/sim-artifacts || true &&
+      echo 'MinIO bucket sim-artifacts ready'
+      "
+    networks: [simnet]
+
+volumes:
+  pgdata:
+    name: complex-sim-pgdata
+  mongodata:
+    name: complex-sim-mongodata
+  mongoconfig:
+    name: complex-sim-mongoconfig
+  miniodata:
+    name: complex-sim-miniodata
+
+networks:
+  simnet:
+    name: complex-sim-net
+    driver: bridge

@@ -1,0 +1,465 @@
+openapi: 3.1.0
+info:
+  title: complex-sim-platform API
+  description: 'Backend API for the complex simulation platform: multi-kind simulation engine (particles,
+    fluids, physics, neural, bio) with JWT auth, real-time WebSocket stepping, export and reporting.'
+  version: 1.0.0
+  x-generated-by: export_openapi.py
+paths:
+  /api/auth/register:
+    post:
+      tags:
+      - auth
+      summary: Register a user and return a JWT access token
+      operationId: register_api_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Register Api Auth Register Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/auth/login:
+    post:
+      tags:
+      - auth
+      summary: Login with username/password (OAuth2 password form)
+      operationId: login_api_auth_login_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_api_auth_login_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Login Api Auth Login Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/auth/me:
+    get:
+      tags:
+      - auth
+      summary: Current user profile
+      operationId: me_api_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Me Api Auth Me Get
+      security:
+      - OAuth2PasswordBearer: []
+  /api/simulations/kinds:
+    get:
+      tags:
+      - simulations
+      summary: List supported simulation kinds
+      description: Public; returns the bare list the frontend contract expects.
+      operationId: list_kinds_api_simulations_kinds_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/simulations:
+    get:
+      tags:
+      - simulations
+      summary: List simulations (admin sees all, users see their own)
+      operationId: list_simulations_api_simulations_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response List Simulations Api Simulations Get
+      security:
+      - OAuth2PasswordBearer: []
+    post:
+      tags:
+      - simulations
+      summary: Create a simulation
+      operationId: create_simulation_api_simulations_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSimRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Create Simulation Api Simulations Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/simulations/{sim_id}:
+    get:
+      tags:
+      - simulations
+      summary: Get simulation state (cached 60s)
+      operationId: get_simulation_api_simulations__sim_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: sim_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sim Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Simulation Api Simulations  Sim Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - simulations
+      summary: Delete a simulation
+      operationId: delete_simulation_api_simulations__sim_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: sim_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sim Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Simulation Api Simulations  Sim Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/simulations/{sim_id}/step:
+    post:
+      tags:
+      - simulations
+      summary: Advance the simulation by dt x steps
+      operationId: step_simulation_api_simulations__sim_id__step_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: sim_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sim Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Step Simulation Api Simulations  Sim Id  Step Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/simulations/{sim_id}/export:
+    get:
+      tags:
+      - simulations
+      summary: Export simulation data as a file download
+      operationId: export_simulation_api_simulations__sim_id__export_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: sim_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sim Id
+      - name: format
+        in: query
+        required: false
+        schema:
+          enum:
+          - csv
+          - json
+          - parquet
+          - hdf5
+          type: string
+          description: csv | json | parquet | hdf5
+          default: json
+          title: Format
+        description: csv | json | parquet | hdf5
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/simulations/{sim_id}/report:
+    post:
+      tags:
+      - simulations
+      summary: Generate summary, stats and charts data
+      operationId: report_simulation_api_simulations__sim_id__report_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: sim_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sim Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Report Simulation Api Simulations  Sim Id  Report Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /health:
+    get:
+      tags:
+      - ops
+      summary: Liveness/readiness probe
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Health Health Get
+  /metrics:
+    get:
+      tags:
+      - ops
+      summary: Simple JSON metrics
+      operationId: metrics_metrics_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Metrics Metrics Get
+components:
+  schemas:
+    Body_login_api_auth_login_post:
+      properties:
+        grant_type:
+          anyOf:
+          - type: string
+            pattern: ^password$
+          - type: 'null'
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          format: password
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ''
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          format: password
+          title: Client Secret
+      type: object
+      required:
+      - username
+      - password
+      title: Body_login_api_auth_login_post
+    CreateSimRequest:
+      properties:
+        kind:
+          type: string
+          maxLength: 32
+          minLength: 1
+          title: Kind
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+      type: object
+      required:
+      - kind
+      title: CreateSimRequest
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    RegisterRequest:
+      properties:
+        username:
+          type: string
+          maxLength: 32
+          minLength: 3
+          title: Username
+          description: 3-32 chars, [A-Za-z0-9_.-]
+        password:
+          type: string
+          maxLength: 128
+          minLength: 8
+          title: Password
+          description: 8-128 chars
+      type: object
+      required:
+      - username
+      - password
+      title: RegisterRequest
+      description: 'Anti-injection constraints: strict username charset, bounded length.'
+    StepRequest:
+      properties:
+        dt:
+          type: number
+          maximum: 10.0
+          exclusiveMinimum: 0.0
+          title: Dt
+          default: 0.016
+        steps:
+          type: integer
+          maximum: 10000.0
+          minimum: 1.0
+          title: Steps
+          default: 1
+      type: object
+      title: StepRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/auth/login
