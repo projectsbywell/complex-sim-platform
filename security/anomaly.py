@@ -2,6 +2,7 @@
 anomaly.py — detecção de anomalias leve (z-score + taxa de requisições)
 Sem dependências externas (stdlib + math). Estado em memória.
 """
+
 from __future__ import annotations
 
 import math
@@ -17,13 +18,23 @@ class AnomalyDetector:
     - taxa de requisições (req/s) por chave
     """
 
-    def __init__(self, window: int = 100, z_threshold: float = 3.0, rate_threshold: float = 60.0, rate_window_sec: float = 60.0):
+    def __init__(
+        self,
+        window: int = 100,
+        z_threshold: float = 3.0,
+        rate_threshold: float = 60.0,
+        rate_window_sec: float = 60.0,
+    ):
         self.window = window
         self.z_threshold = z_threshold
         self.rate_threshold = rate_threshold
         self.rate_window_sec = rate_window_sec
-        self._values: Dict[str, Deque[float]] = defaultdict(lambda: deque(maxlen=window))
-        self._timestamps: Dict[str, Deque[float]] = defaultdict(lambda: deque(maxlen=1000))
+        self._values: Dict[str, Deque[float]] = defaultdict(
+            lambda: deque(maxlen=window)
+        )
+        self._timestamps: Dict[str, Deque[float]] = defaultdict(
+            lambda: deque(maxlen=1000)
+        )
 
     # --- valores (z-score) ---
     def observe(self, key: str, value: float, ts: Optional[float] = None) -> None:
@@ -38,7 +49,13 @@ class AnomalyDetector:
         mean = sum(vals) / n
         var = sum((x - mean) ** 2 for x in vals) / n if n > 1 else 0.0
         std = math.sqrt(var)
-        return {"count": float(n), "mean": mean, "std": std, "min": min(vals), "max": max(vals)}
+        return {
+            "count": float(n),
+            "mean": mean,
+            "std": std,
+            "min": min(vals),
+            "max": max(vals),
+        }
 
     def z_score(self, key: str, value: float) -> float:
         s = self.stats(key)
@@ -65,7 +82,9 @@ class AnomalyDetector:
     def is_rate_anomaly(self, key: str, now: Optional[float] = None) -> bool:
         return self.rate(key, now=now) > self.rate_threshold
 
-    def check(self, key: str, value: float, now: Optional[float] = None) -> Dict[str, object]:
+    def check(
+        self, key: str, value: float, now: Optional[float] = None
+    ) -> Dict[str, object]:
         """Avaliação completa."""
         z = self.z_score(key, value)
         anom = self.is_anomaly(key, value)

@@ -1,4 +1,5 @@
 """Authentication routes: register, login (OAuth2 form), me."""
+
 from __future__ import annotations
 
 import logging
@@ -22,7 +23,9 @@ USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]{3,32}$")
 class RegisterRequest(BaseModel):
     """Anti-injection constraints: strict username charset, bounded length."""
 
-    username: str = Field(..., min_length=3, max_length=32, description="3-32 chars, [A-Za-z0-9_.-]")
+    username: str = Field(
+        ..., min_length=3, max_length=32, description="3-32 chars, [A-Za-z0-9_.-]"
+    )
     password: str = Field(..., min_length=8, max_length=128, description="8-128 chars")
 
     @field_validator("username")

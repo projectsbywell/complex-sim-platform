@@ -1,4 +1,5 @@
 """Backend cache/store/service coverage — fecha global rumo a 80%+."""
+
 import os
 import sys
 import time
@@ -65,7 +66,9 @@ def test_store_crud_and_corrupt_quarantine(tmp_path):
     (d2 / "users.json").write_text("{INVALID JSON", encoding="utf-8")
     b2 = JsonFileBackend(d2)
     assert b2.all("users") == {}
-    assert list(d2.glob("users.corrupt-*.json")) != [] or True  # rename pode falhar em lock, mas não crasha
+    assert (
+        list(d2.glob("users.corrupt-*.json")) != [] or True
+    )  # rename pode falhar em lock, mas não crasha
 
 
 def test_sim_service_errors():
@@ -201,7 +204,9 @@ def test_mock_engines_direct_and_helpers():
     assert svc_mod.to_jsonable(_np.float32(1.5)) == 1.5
     assert isinstance(svc_mod.to_jsonable(object()), str)
     # _numeric_columns + _describe + _flatten_numbers
-    cols = svc_mod.SimulationService._numeric_columns({"a": 1.0, "l": [1.0, 2.0], "s": "x", "d": {"n": 3.0}})
+    cols = svc_mod.SimulationService._numeric_columns(
+        {"a": 1.0, "l": [1.0, 2.0], "s": "x", "d": {"n": 3.0}}
+    )
     assert cols["a"] == [1.0] and cols["l"] == [1.0, 2.0]
     desc = svc_mod._describe([1.0, 2.0, 3.0])
     assert desc["count"] == 3 and abs(desc["mean"] - 2.0) < 1e-9

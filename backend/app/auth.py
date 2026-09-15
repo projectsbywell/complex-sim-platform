@@ -1,4 +1,5 @@
 """JWT authentication and bcrypt password hashing (direct bcrypt, no passlib)."""
+
 from __future__ import annotations
 
 import datetime
@@ -26,9 +27,9 @@ def _bcrypt_bytes(password: str) -> bytes:
 
 def hash_password(password: str) -> str:
     """Hash a password with bcrypt (cost 12)."""
-    return bcrypt.hashpw(
-        _bcrypt_bytes(password), bcrypt.gensalt(rounds=12)
-    ).decode("ascii")
+    return bcrypt.hashpw(_bcrypt_bytes(password), bcrypt.gensalt(rounds=12)).decode(
+        "ascii"
+    )
 
 
 def verify_password(password: str, hashed: str) -> bool:
@@ -77,6 +78,7 @@ def decode_token(token: str) -> dict:
 # ---------------------------------------------------------------------------
 # FastAPI dependencies
 # ---------------------------------------------------------------------------
+
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     """Resolve the authenticated user from the Bearer token."""

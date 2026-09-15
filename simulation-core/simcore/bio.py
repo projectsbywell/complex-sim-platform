@@ -212,7 +212,9 @@ class _Ecosystem:
                         continue
                     ni = np.clip(np.arange(n)[:, None] + di, 0, n - 1)
                     nj = np.clip(np.arange(n)[None, :] + dj, 0, n - 1)
-                    eaten = np.minimum(self.herb * self.herb_eat_rate / 8.0, self.veg[ni, nj])
+                    eaten = np.minimum(
+                        self.herb * self.herb_eat_rate / 8.0, self.veg[ni, nj]
+                    )
                     self.veg -= eaten
 
             # Reproduction / death

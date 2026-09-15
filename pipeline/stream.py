@@ -17,6 +17,7 @@ import numpy as np
 @dataclass
 class BufferConfig:
     """Configuration for the streaming buffer."""
+
     max_size: int = 10000
     flush_interval_ms: int = 1000
     compression: bool = False
@@ -26,6 +27,7 @@ class BufferConfig:
 @dataclass
 class BufferMetrics:
     """Runtime metrics for the streaming buffer."""
+
     items_processed: int = 0
     items_dropped: int = 0
     current_size: int = 0
@@ -156,9 +158,8 @@ class StreamConsumer:
         rng = self._rng
         for i in range(n_points):
             t = i * interval_sec
-            value = (
-                amplitude * np.sin(2 * np.pi * frequency * t)
-                + rng.normal(0, noise_level)
+            value = amplitude * np.sin(2 * np.pi * frequency * t) + rng.normal(
+                0, noise_level
             )
             yield {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -179,7 +180,7 @@ class StreamConsumer:
                 buf = list(self._buffer)
             if len(buf) >= window_size:
                 for i in range(len(buf) - window_size + 1):
-                    yield buf[i:i + window_size]
+                    yield buf[i : i + window_size]
                 time.sleep(0.01)
             else:
                 time.sleep(0.05)

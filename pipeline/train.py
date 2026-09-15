@@ -16,6 +16,7 @@ import numpy as np
 # Attempt to import from simcore.neural if available
 try:
     from simcore.neural import NeuralNetwork, AdamOptimizer
+
     SIMCORE_AVAILABLE = True
 except ImportError:
     SIMCORE_AVAILABLE = False
@@ -24,6 +25,7 @@ except ImportError:
 @dataclass
 class TrainingConfig:
     """Configuration for the training pipeline."""
+
     epochs: int = 100
     batch_size: int = 32
     learning_rate: float = 0.001
@@ -48,7 +50,8 @@ class DataPreparer:
         self._rng = np.random.default_rng(self.config.seed)
 
     def prepare_from_records(
-        self, records: List[Dict[str, Any]],
+        self,
+        records: List[Dict[str, Any]],
         feature_fields: List[str],
         target_field: str,
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -72,7 +75,9 @@ class DataPreparer:
         train_idx, val_idx = indices[:split], indices[split:]
         return X[train_idx], X[val_idx], y[train_idx], y[val_idx]
 
-    def normalize_features(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def normalize_features(
+        self, X: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Z-score normalize features. Returns (normalized, mean, std)."""
         mean = np.mean(X, axis=0)
         std = np.std(X, axis=0)
@@ -102,7 +107,9 @@ class PipelineTrainer:
                 output_activation=self.config.output_activation,
                 loss_fn=self.config.loss_fn,
             )
-            self.model.compile(optimizer=AdamOptimizer(learning_rate=self.config.learning_rate))
+            self.model.compile(
+                optimizer=AdamOptimizer(learning_rate=self.config.learning_rate)
+            )
         else:
             # Fallback: numpy MLP
             self.model = self._build_numpy_mlp(input_dim)
@@ -171,7 +178,9 @@ class PipelineTrainer:
                 self.history["epoch"].append(epoch)
 
                 if self.config.verbose and epoch % 10 == 0:
-                    print(f"Epoch {epoch}/{epochs} - loss: {loss:.6f} - val_loss: {val_loss:.6f}")
+                    print(
+                        f"Epoch {epoch}/{epochs} - loss: {loss:.6f} - val_loss: {val_loss:.6f}"
+                    )
 
                 # Early stopping
                 if val_loss < best_loss:
@@ -223,7 +232,11 @@ class PipelineTrainer:
         deltas = [delta]
 
         for i in range(len(self.model["weights"]) - 1, 0, -1):
-            delta = deltas[-1] @ self.model["weights"][i].T * self._relu_derivative(activations[i])
+            delta = (
+                deltas[-1]
+                @ self.model["weights"][i].T
+                * self._relu_derivative(activations[i])
+            )
             deltas.append(delta)
         deltas.reverse()
 

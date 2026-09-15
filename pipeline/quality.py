@@ -38,10 +38,14 @@ class SchemaValidator:
                 continue
             value = record[field]
             if value is None:
-                errors.append(f"Field {field} is None, expected {expected_type.__name__}")
+                errors.append(
+                    f"Field {field} is None, expected {expected_type.__name__}"
+                )
                 continue
             # Allow numpy numeric types
-            if expected_type in (int, float) and isinstance(value, (int, float, np.integer, np.floating)):
+            if expected_type in (int, float) and isinstance(
+                value, (int, float, np.integer, np.floating)
+            ):
                 continue
             if expected_type == bool and isinstance(value, bool):
                 continue
@@ -77,7 +81,13 @@ class SchemaValidator:
             is_valid, errors = self.validate(rec)
             if is_valid:
                 valid_count += 1
-            results.append({"record_id": rec.get("_record_id"), "valid": is_valid, "errors": errors})
+            results.append(
+                {
+                    "record_id": rec.get("_record_id"),
+                    "valid": is_valid,
+                    "errors": errors,
+                }
+            )
 
         total = len(records)
         return {
@@ -110,7 +120,9 @@ class MissingRateAnalyzer:
         n = len(self.records)
         rates = {}
         for field in self._all_fields:
-            missing = sum(1 for rec in self.records if field not in rec or rec[field] is None)
+            missing = sum(
+                1 for rec in self.records if field not in rec or rec[field] is None
+            )
             rates[field] = missing / n
         return rates
 
@@ -129,23 +141,28 @@ class MissingRateAnalyzer:
         total_fields = len(self.records) * len(self._all_fields)
         if total_fields == 0:
             return 0.0
-        missing = sum(1 for rec in self.records for f in self._all_fields if f not in rec or rec[f] is None)
+        missing = sum(
+            1
+            for rec in self.records
+            for f in self._all_fields
+            if f not in rec or rec[f] is None
+        )
         return missing / total_fields
 
     def report(self) -> Dict[str, Any]:
         """Generate a comprehensive missing data report."""
         field_rates = self.field_missing_rates()
         rec_counts = self.record_missing_counts()
-        critical_fields = {
-            f: r for f, r in field_rates.items() if r > 0.5
-        }
+        critical_fields = {f: r for f, r in field_rates.items() if r > 0.5}
         return {
             "total_records": len(self.records),
             "total_fields": len(self._all_fields),
             "overall_missing_rate": self.overall_missing_rate(),
             "field_missing_rates": field_rates,
             "critical_fields": critical_fields,
-            "records_exceeding_50pct_missing": sum(1 for c in rec_counts.values() if c > len(self._all_fields) * 0.5),
+            "records_exceeding_50pct_missing": sum(
+                1 for c in rec_counts.values() if c > len(self._all_fields) * 0.5
+            ),
         }
 
 
@@ -188,20 +205,20 @@ class OutlierDetector:
         outliers = []
         for idx, z in zip(indices, z_scores):
             if z > threshold:
-                outliers.append({
-                    "record_index": idx,
-                    "record_id": self.records[idx].get("_record_id"),
-                    "field": field,
-                    "value": float(arr[idx]),
-                    "z_score": float(z),
-                    "mean": float(mean),
-                    "std": float(std),
-                })
+                outliers.append(
+                    {
+                        "record_index": idx,
+                        "record_id": self.records[idx].get("_record_id"),
+                        "field": field,
+                        "value": float(arr[idx]),
+                        "z_score": float(z),
+                        "mean": float(mean),
+                        "std": float(std),
+                    }
+                )
         return outliers
 
-    def iqr_outliers(
-        self, field: str, multiplier: float = 1.5
-    ) -> List[Dict[str, Any]]:
+    def iqr_outliers(self, field: str, multiplier: float = 1.5) -> List[Dict[str, Any]]:
         """Identify outliers using the Interquartile Range method."""
         values = []
         indices = []
@@ -222,14 +239,16 @@ class OutlierDetector:
         outliers = []
         for idx, val in zip(indices, arr):
             if val < lower or val > upper:
-                outliers.append({
-                    "record_index": idx,
-                    "record_id": self.records[idx].get("_record_id"),
-                    "field": field,
-                    "value": float(val),
-                    "iqr_lower": float(lower),
-                    "iqr_upper": float(upper),
-                })
+                outliers.append(
+                    {
+                        "record_index": idx,
+                        "record_id": self.records[idx].get("_record_id"),
+                        "field": field,
+                        "value": float(val),
+                        "iqr_lower": float(lower),
+                        "iqr_upper": float(upper),
+                    }
+                )
         return outliers
 
     def multi_field_outliers(self, threshold: float = 3.0) -> Dict[str, Any]:
@@ -265,7 +284,9 @@ class OutlierDetector:
 class QualityReport:
     """Generates a comprehensive data quality report."""
 
-    def __init__(self, records: List[Dict[str, Any]], schema: Optional[Dict[str, type]] = None):
+    def __init__(
+        self, records: List[Dict[str, Any]], schema: Optional[Dict[str, type]] = None
+    ):
         self.records = records
         self.schema = schema
         self._timestamp = datetime.now(timezone.utc).isoformat()
@@ -306,7 +327,9 @@ class QualityReport:
             numeric_fields = {}
             for rec in self.records:
                 for k, v in rec.items():
-                    if isinstance(v, (int, float, np.number)) and not isinstance(v, bool):
+                    if isinstance(v, (int, float, np.number)) and not isinstance(
+                        v, bool
+                    ):
                         numeric_fields.setdefault(k, []).append(float(v))
             report["statistics"] = {
                 field: {

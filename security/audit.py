@@ -3,6 +3,7 @@ audit.py — AuditLogger JSON lines
 Campos: actor, action, resource, timestamp (ISO8601), details, ip, request_id
 Saída: arquivo JSON lines + opcional stdout. Seguro para concorrência básica (append).
 """
+
 from __future__ import annotations
 
 import json
@@ -65,7 +66,13 @@ class AuditLogger:
                     continue
         return out
 
-    def filter(self, actor: Optional[str] = None, action: Optional[str] = None, resource: Optional[str] = None, limit: int = 100) -> list[Dict[str, Any]]:
+    def filter(
+        self,
+        actor: Optional[str] = None,
+        action: Optional[str] = None,
+        resource: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[Dict[str, Any]]:
         rows = self.read(limit=10000)
         res = []
         for r in rows:
@@ -92,7 +99,9 @@ class AuditLogger:
 
 if __name__ == "__main__":
     lg = AuditLogger("/tmp/test_audit.log")
-    lg.log(actor="alice", action="create_sim", resource="sim:1", details={"type": "sir"})
+    lg.log(
+        actor="alice", action="create_sim", resource="sim:1", details={"type": "sir"}
+    )
     lg.log(actor="bob", action="login", resource="auth", ip="127.0.0.1")
     print(lg.read())
     print("audit OK")

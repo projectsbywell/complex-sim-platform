@@ -36,15 +36,20 @@ def clean_data(
     numeric_fields = set()
     for rec in records:
         for k, v in rec.items():
-            if isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(v, bool):
+            if isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(
+                v, bool
+            ):
                 numeric_fields.add(k)
 
     # Compute fill values per field
     fill_values = {}
     for field in numeric_fields:
         values = [
-            rec[field] for rec in records
-            if field in rec and rec[field] is not None and isinstance(rec[field], (int, float, np.number))
+            rec[field]
+            for rec in records
+            if field in rec
+            and rec[field] is not None
+            and isinstance(rec[field], (int, float, np.number))
         ]
         if not values:
             fill_values[field] = 0.0
@@ -105,9 +110,7 @@ def normalize_data(
 
     normalized = []
     for field in fields:
-        values = np.array([
-            float(rec.get(field, 0)) for rec in records
-        ])
+        values = np.array([float(rec.get(field, 0)) for rec in records])
         if method == "zscore":
             mean, std = np.mean(values), np.std(values)
             if std > 0:
@@ -145,7 +148,11 @@ def normalize_data(
                 new_rec[field] = float((values[i] - mean) / std) if std > 0 else 0.0
             elif method == "minmax":
                 min_v, max_v = np.min(values), np.max(values)
-                new_rec[field] = float((values[i] - min_v) / (max_v - min_v)) if max_v > min_v else 0.0
+                new_rec[field] = (
+                    float((values[i] - min_v) / (max_v - min_v))
+                    if max_v > min_v
+                    else 0.0
+                )
             elif method == "log":
                 v = max(float(rec.get(field, 0)), 0)
                 new_rec[field] = float(np.log1p(v))
@@ -192,15 +199,13 @@ def aggregate_window(
                     numeric_fields.add(k)
 
         for start in range(0, len(group_records), window_size):
-            window = group_records[start:start + window_size]
+            window = group_records[start : start + window_size]
             window_record = {"_window_start": start, "_window_size": len(window)}
             if group_by:
                 window_record["_group"] = key
 
             for field in numeric_fields:
-                vals = np.array([
-                    float(rec.get(field, 0)) for rec in window
-                ])
+                vals = np.array([float(rec.get(field, 0)) for rec in window])
                 if agg_func == "mean":
                     window_record[field] = float(np.mean(vals))
                 elif agg_func == "sum":

@@ -65,19 +65,28 @@ def to_csv(state: Dict[str, Any], path: str | Path) -> None:
             bodies = state["bodies"]
             writer.writerow(["x", "y", "vx", "vy", "mass", "radius"])
             for b in bodies:
-                writer.writerow([b["x"], b["y"], b["vx"], b["vy"], b["mass"], b["radius"]])
+                writer.writerow(
+                    [b["x"], b["y"], b["vx"], b["vy"], b["mass"], b["radius"]]
+                )
             return
 
         # SIR / Lotka — top-level scalars
-        scalars = {k: v for k, v in state.items()
-                   if isinstance(v, (int, float, str)) and k != "step"}
+        scalars = {
+            k: v
+            for k, v in state.items()
+            if isinstance(v, (int, float, str)) and k != "step"
+        }
         if scalars:
             writer.writerow(list(scalars.keys()))
             writer.writerow(list(scalars.values()))
             return
 
         # History array (e.g. SIR history)
-        if "history" in state and isinstance(state["history"], list) and state["history"]:
+        if (
+            "history" in state
+            and isinstance(state["history"], list)
+            and state["history"]
+        ):
             hist = state["history"]
             writer.writerow(list(hist[0].keys()))
             for row in hist:
@@ -85,16 +94,23 @@ def to_csv(state: Dict[str, Any], path: str | Path) -> None:
             return
 
         # Ecosystem grids — flatten to CSV per-grid
-        for grid_key in ("vegetation", "herbivores", "carnivores",
-                         "density", "vx", "vy"):
+        for grid_key in (
+            "vegetation",
+            "herbivores",
+            "carnivores",
+            "density",
+            "vx",
+            "vy",
+        ):
             if grid_key in state and isinstance(state[grid_key], list):
                 for row in state[grid_key]:
                     writer.writerow(row)
                 return
 
         # Generic fallback: list all scalar / short-list values
-        flat = {k: v for k, v in state.items()
-                if isinstance(v, (int, float, str, bool))}
+        flat = {
+            k: v for k, v in state.items() if isinstance(v, (int, float, str, bool))
+        }
         if flat:
             writer.writerow(list(flat.keys()))
             writer.writerow(list(flat.values()))

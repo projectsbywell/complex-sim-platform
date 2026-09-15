@@ -61,10 +61,8 @@ def _diffuse(x: np.ndarray, x0: np.ndarray, diff: float, dt: float) -> np.ndarra
     for _ in range(4):
         x_new[1:-1, 1:-1] = (
             x0[1:-1, 1:-1]
-            + a * (
-                x_new[:-2, 1:-1] + x_new[2:, 1:-1]
-                + x_new[1:-1, :-2] + x_new[1:-1, 2:]
-            )
+            + a
+            * (x_new[:-2, 1:-1] + x_new[2:, 1:-1] + x_new[1:-1, :-2] + x_new[1:-1, 2:])
         ) / (1 + 4 * a)
     return x_new
 
@@ -93,9 +91,8 @@ def _advect(
     s0 = 1.0 - s1
     t1 = y - j0
     t0 = 1.0 - t1
-    d_new[1:-1, 1:-1] = (
-        s0 * (t0 * d0[i0, j0] + t1 * d0[i0, j1])
-        + s1 * (t0 * d0[i1, j0] + t1 * d0[i1, j1])
+    d_new[1:-1, 1:-1] = s0 * (t0 * d0[i0, j0] + t1 * d0[i0, j1]) + s1 * (
+        t0 * d0[i1, j0] + t1 * d0[i1, j1]
     )
     return d_new
 
@@ -116,7 +113,9 @@ def _set_boundary(b: int, x: np.ndarray) -> None:
         x[n - 1, :] = -x[n - 2, :]
 
 
-def _pressure_jacobi(p: np.ndarray, div: np.ndarray, iters: int = _JACOBI_ITERS) -> np.ndarray:
+def _pressure_jacobi(
+    p: np.ndarray, div: np.ndarray, iters: int = _JACOBI_ITERS
+) -> np.ndarray:
     """Solve pressure Poisson equation via Jacobi iteration.
 
     div = -∇²p  →  p_new = (Σneighbours - div) / 4
@@ -125,11 +124,12 @@ def _pressure_jacobi(p: np.ndarray, div: np.ndarray, iters: int = _JACOBI_ITERS)
     p_new = p.copy()
     for _ in range(iters):
         p_new[1:-1, 1:-1] = (
-            (p_new[:-2, 1:-1] + p_new[2:, 1:-1]
-             + p_new[1:-1, :-2] + p_new[1:-1, 2:]
-             - div[1:-1, 1:-1])
-            / 4.0
-        )
+            p_new[:-2, 1:-1]
+            + p_new[2:, 1:-1]
+            + p_new[1:-1, :-2]
+            + p_new[1:-1, 2:]
+            - div[1:-1, 1:-1]
+        ) / 4.0
     return p_new
 
 
@@ -214,12 +214,18 @@ class FluidSimulation(Simulatable):
 
         # --- Projection (incompressibility) ---
         div = np.zeros((self._n, self._n))
-        div[1:-1, 1:-1] = -0.5 * (
-            (self._vx[2:, 1:-1] - self._vx[:-2, 1:-1])
-            + (self._vy[1:-1, 2:] - self._vy[1:-1, :-2])
-        ) / self._n
+        div[1:-1, 1:-1] = (
+            -0.5
+            * (
+                (self._vx[2:, 1:-1] - self._vx[:-2, 1:-1])
+                + (self._vy[1:-1, 2:] - self._vy[1:-1, :-2])
+            )
+            / self._n
+        )
         p = _pressure_jacobi(
-            np.zeros_like(div), div, iters=int(self._params.get("pressure_iters", _JACOBI_ITERS))
+            np.zeros_like(div),
+            div,
+            iters=int(self._params.get("pressure_iters", _JACOBI_ITERS)),
         )
         self._vx[1:-1, 1:-1] -= 0.5 * self._n * (p[2:, 1:-1] - p[:-2, 1:-1])
         self._vy[1:-1, 1:-1] -= 0.5 * self._n * (p[1:-1, 2:] - p[1:-1, :-2])
@@ -228,9 +234,7 @@ class FluidSimulation(Simulatable):
         d0 = self._density.copy()
         self._density = _diffuse(self._density, d0, diff, dt)
         d1 = self._density.copy()
-        self._density = _advect(
-            self._density, d1, self._vx, self._vy, dt
-        )
+        self._density = _advect(self._density, d1, self._vx, self._vy, dt)
 
         # --- Boundary conditions ---
         _set_boundary(1, self._vx)

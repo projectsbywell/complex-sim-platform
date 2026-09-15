@@ -19,6 +19,7 @@ import numpy as np
 # RNG helper
 # ---------------------------------------------------------------------------
 
+
 def seed_rng(seed: Optional[int]) -> np.random.Generator:
     """Return a deterministic NumPy random Generator seeded with *seed*.
 
@@ -30,6 +31,7 @@ def seed_rng(seed: Optional[int]) -> np.random.Generator:
 # ---------------------------------------------------------------------------
 # Numeric helpers
 # ---------------------------------------------------------------------------
+
 
 def clamp(value: float, lo: float, hi: float) -> float:
     """Clamp *value* to the closed interval ``[lo, hi]``."""
@@ -43,6 +45,7 @@ def clamp(value: float, lo: float, hi: float) -> float:
 # ---------------------------------------------------------------------------
 # Vec2 dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Vec2:
@@ -72,7 +75,7 @@ class Vec2:
 
     def length(self) -> float:
         """Euclidean length."""
-        return (self.x ** 2 + self.y ** 2) ** 0.5
+        return (self.x**2 + self.y**2) ** 0.5
 
     def normalized(self) -> "Vec2":
         """Return a unit vector (zero-length input returns zero vector)."""
@@ -92,6 +95,7 @@ class Vec2:
 # ---------------------------------------------------------------------------
 # Simulatable abstract base
 # ---------------------------------------------------------------------------
+
 
 class Simulatable(abc.ABC):
     """Interface that every simulation module must satisfy.

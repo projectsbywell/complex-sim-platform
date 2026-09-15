@@ -176,14 +176,14 @@ class NeuralSimulation(Simulatable):
             for i in range(len(self._W)):
                 self._mW[i] = beta1 * self._mW[i] + (1 - beta1) * self._grad_W[i]
                 self._vW[i] = beta2 * self._vW[i] + (1 - beta2) * self._grad_W[i] ** 2
-                mhat = self._mW[i] / (1 - beta1 ** self._t)
-                vhat = self._vW[i] / (1 - beta2 ** self._t)
+                mhat = self._mW[i] / (1 - beta1**self._t)
+                vhat = self._vW[i] / (1 - beta2**self._t)
                 self._W[i] -= lr * mhat / (np.sqrt(vhat) + eps_adam)
 
                 self._mb[i] = beta1 * self._mb[i] + (1 - beta1) * self._grad_b[i]
                 self._vb[i] = beta2 * self._vb[i] + (1 - beta2) * self._grad_b[i] ** 2
-                mbhat = self._mb[i] / (1 - beta1 ** self._t)
-                vbhat = self._vb[i] / (1 - beta2 ** self._t)
+                mbhat = self._mb[i] / (1 - beta1**self._t)
+                vbhat = self._vb[i] / (1 - beta2**self._t)
                 self._b[i] -= lr * mbhat / (np.sqrt(vbhat) + eps_adam)
         else:  # sgd
             for i in range(len(self._W)):

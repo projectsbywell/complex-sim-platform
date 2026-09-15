@@ -5,6 +5,7 @@ swagger routes). Returns ``429 + retry-after`` when the budget is exhausted.
 
 A reusable ``WindowGuard`` is exposed for WebSocket message throttling.
 """
+
 from __future__ import annotations
 
 import json
@@ -55,7 +56,9 @@ class WindowGuard:
             return
         for key in [k for k, dq in self._hits.items() if not dq]:
             del self._hits[key]
-        for key in [k for k, dq in self._hits.items() if dq and now - dq[-1] >= self.window * 2]:
+        for key in [
+            k for k, dq in self._hits.items() if dq and now - dq[-1] >= self.window * 2
+        ]:
             del self._hits[key]
 
     def active_keys(self) -> int:

@@ -72,23 +72,23 @@ def _flatten_state(state: Dict[str, Any]) -> list[dict]:
             return rows
 
     # Grids (ecosystem / fluid)
-    for grid_key in ("vegetation", "herbivores", "carnivores",
-                     "density", "vx", "vy"):
+    for grid_key in ("vegetation", "herbivores", "carnivores", "density", "vx", "vy"):
         if grid_key in state and isinstance(state[grid_key], list):
             grid = state[grid_key]
             for r_idx, row_data in enumerate(grid):
                 for c_idx, val in enumerate(row_data):
-                    rows.append({
-                        "grid": grid_key,
-                        "row": r_idx,
-                        "col": c_idx,
-                        "value": val,
-                    })
+                    rows.append(
+                        {
+                            "grid": grid_key,
+                            "row": r_idx,
+                            "col": c_idx,
+                            "value": val,
+                        }
+                    )
             return rows
 
     # Scalar fallback
-    scalars = {k: v for k, v in state.items()
-               if isinstance(v, (int, float, str, bool))}
+    scalars = {k: v for k, v in state.items() if isinstance(v, (int, float, str, bool))}
     if scalars:
         rows.append(scalars)
     return rows
@@ -97,6 +97,7 @@ def _flatten_state(state: Dict[str, Any]) -> list[dict]:
 # -----------------------------------------------------------------------
 # Export functions
 # -----------------------------------------------------------------------
+
 
 def export_json(state: Dict[str, Any], path: str | Path) -> None:
     """Write *state* as pretty-printed JSON."""
@@ -152,8 +153,9 @@ def export_hdf5(state: Dict[str, Any], path: str | Path) -> None:
 
         with h5py.File(str(p), "w") as f:
             # Store metadata
-            meta = {k: v for k, v in state.items()
-                    if isinstance(v, (int, float, str, bool))}
+            meta = {
+                k: v for k, v in state.items() if isinstance(v, (int, float, str, bool))
+            }
             for k, v in meta.items():
                 f.attrs[k] = v
 
@@ -168,16 +170,12 @@ def export_hdf5(state: Dict[str, Any], path: str | Path) -> None:
                             # Non-numeric list of lists — store as JSON bytes
                             f.create_dataset(
                                 key,
-                                data=np.bytes_(
-                                    json.dumps(val, default=_json_default)
-                                ),
+                                data=np.bytes_(json.dumps(val, default=_json_default)),
                             )
                     except (ValueError, TypeError):
                         f.create_dataset(
                             key,
-                            data=np.bytes_(
-                                json.dumps(val, default=_json_default)
-                            ),
+                            data=np.bytes_(json.dumps(val, default=_json_default)),
                         )
     except Exception:
         fallback = Path(path).with_suffix(".json")

@@ -33,31 +33,61 @@ def main() -> None:
     kinds = [
         (
             "particles",
-            {"n": 100, "gravity": 9.81, "damping": 0.999, "restitution": 0.8,
-             "bounds": (100.0, 100.0), "seed": 42},
+            {
+                "n": 100,
+                "gravity": 9.81,
+                "damping": 0.999,
+                "restitution": 0.8,
+                "bounds": (100.0, 100.0),
+                "seed": 42,
+            },
             0.01,
         ),
         (
             "fluids",
-            {"size": 32, "viscosity": 1e-4, "diffusion": 1e-6, "buoyancy": 0.5, "seed": 42},
+            {
+                "size": 32,
+                "viscosity": 1e-4,
+                "diffusion": 1e-6,
+                "buoyancy": 0.5,
+                "seed": 42,
+            },
             0.1,
         ),
         (
             "physics",
-            {"n": 30, "gravity": 9.81, "friction": 0.3, "restitution": 0.6,
-             "bounds": (100.0, 100.0), "seed": 42},
+            {
+                "n": 30,
+                "gravity": 9.81,
+                "friction": 0.3,
+                "restitution": 0.6,
+                "bounds": (100.0, 100.0),
+                "seed": 42,
+            },
             0.01,
         ),
         (
             "neural",
-            {"layers": [4, 8, 4, 1], "activation": "relu", "loss": "mse",
-             "optimiser": "adam", "seed": 42},
+            {
+                "layers": [4, 8, 4, 1],
+                "activation": "relu",
+                "loss": "mse",
+                "optimiser": "adam",
+                "seed": 42,
+            },
             0.0,
         ),
         (
             "bio",
-            {"model": "sir", "n_pop": 1000, "i0": 10, "r0": 0,
-             "beta": 0.3, "gamma": 0.1, "seed": 42},
+            {
+                "model": "sir",
+                "n_pop": 1000,
+                "i0": 10,
+                "r0": 0,
+                "beta": 0.3,
+                "gamma": 0.1,
+                "seed": 42,
+            },
             1.0,
         ),
     ]
@@ -66,15 +96,28 @@ def main() -> None:
     bio_extra = [
         (
             "bio_lotka",
-            {"model": "lotka", "prey0": 40.0, "pred0": 9.0,
-             "alpha": 1.1, "lotka_beta": 0.4, "delta": 0.1, "lotka_gamma": 0.4,
-             "seed": 42},
+            {
+                "model": "lotka",
+                "prey0": 40.0,
+                "pred0": 9.0,
+                "alpha": 1.1,
+                "lotka_beta": 0.4,
+                "delta": 0.1,
+                "lotka_gamma": 0.4,
+                "seed": 42,
+            },
             0.1,
         ),
         (
             "bio_eco",
-            {"model": "eco", "grid_size": 32, "veg_init": 0.5,
-             "herb_init": 0.05, "carn_init": 0.01, "seed": 42},
+            {
+                "model": "eco",
+                "grid_size": 32,
+                "veg_init": 0.5,
+                "herb_init": 0.05,
+                "carn_init": 0.01,
+                "seed": 42,
+            },
             1.0,
         ),
     ]
@@ -90,10 +133,16 @@ def main() -> None:
 
     import numpy as np
 
-    eng_n = SimulationEngine("neural", {
-        "layers": [2, 8, 1], "activation": "relu",
-        "loss": "mse", "optimiser": "adam", "seed": 42,
-    })
+    eng_n = SimulationEngine(
+        "neural",
+        {
+            "layers": [2, 8, 1],
+            "activation": "relu",
+            "loss": "mse",
+            "optimiser": "adam",
+            "seed": 42,
+        },
+    )
     # XOR problem
     X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)
     y = np.array([[0], [1], [1], [0]], dtype=float)
@@ -185,6 +234,7 @@ def _summarise(kind: str, state: dict) -> str:
     if kind == "fluids":
         density = state.get("density", [[0]])
         import numpy as np
+
         arr = np.array(density)
         return f"grid={state.get('grid_size', '?')}, max_density={arr.max():.4f}"
     if kind == "physics":
@@ -201,6 +251,7 @@ def _summarise(kind: str, state: dict) -> str:
         return f"prey={state['prey']:.2f}, pred={state['pred']:.2f}"
     if "vegetation" in state:
         import numpy as np
+
         v = np.mean(state["vegetation"])
         h = np.mean(state["herbivores"])
         c = np.mean(state["carnivores"])

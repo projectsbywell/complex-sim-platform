@@ -3,6 +3,7 @@
 Every log line is a single JSON document (one per line) — grep/parse friendly.
 Metrics are simple counters/gauges/duration samples exposed by /metrics.
 """
+
 from __future__ import annotations
 
 import json
@@ -28,8 +29,18 @@ class JsonFormatter(logging.Formatter):
             "event": record.getMessage(),
         }
         for key in (
-            "method", "path", "status", "duration_ms", "ip", "user",
-            "request_id", "simulation_id", "kind", "role", "exc", "reason",
+            "method",
+            "path",
+            "status",
+            "duration_ms",
+            "ip",
+            "user",
+            "request_id",
+            "simulation_id",
+            "kind",
+            "role",
+            "exc",
+            "reason",
         ):
             val = getattr(record, key, None)
             if val is not None:
@@ -58,6 +69,7 @@ def get_logger(name: str = LOG_NAME) -> logging.Logger:
 # ---------------------------------------------------------------------------
 # Metrics registry
 # ---------------------------------------------------------------------------
+
 
 class MetricsRegistry:
     """Thread-safe counters, gauges and request-duration samples."""
@@ -88,11 +100,7 @@ class MetricsRegistry:
             counters = dict(self._counters)
             durations = dict(self._durations_ms)
             n_dur = dict(self._n_durations)
-        avg = {
-            k: round(v / n_dur[k], 3)
-            for k, v in durations.items()
-            if n_dur.get(k)
-        }
+        avg = {k: round(v / n_dur[k], 3) for k, v in durations.items() if n_dur.get(k)}
         return {
             "uptime_seconds": uptime,
             "counters": counters,
@@ -107,6 +115,7 @@ registry = MetricsRegistry()
 # ASGI middlewares
 # ---------------------------------------------------------------------------
 
+
 class RequestLoggingMiddleware:
     """Log every HTTP request as a JSON line and collect metrics.
 
@@ -119,14 +128,18 @@ class RequestLoggingMiddleware:
         self._templates: list[Any] = []
         # ``app`` received here is the next middleware in the stack, not the
         # FastAPI app; the route table must come from the explicit reference.
-        router = getattr(fastapi_app, "router", None) if fastapi_app is not None else None
+        router = (
+            getattr(fastapi_app, "router", None) if fastapi_app is not None else None
+        )
         if router is None:
             router = getattr(app, "router", None)
         if router is not None:
             for route in getattr(router, "routes", []):
                 # FastAPI>=0.139 wraps included routers in _IncludedRouter;
                 # dig down to the original APIRouter's routes.
-                nested = getattr(route, "original_router", None) or getattr(route, "router", None)
+                nested = getattr(route, "original_router", None) or getattr(
+                    route, "router", None
+                )
                 source = nested if nested is not None else None
                 self._collect_templates(source or route)
 

@@ -6,6 +6,7 @@ the platform runs with zero external services. ``StorageBackend`` is the seam
 where Postgres / Timescale / Mongo adapters plug in when ``DATABASE_URL`` is
 set — no other module talks to persistence directly.
 """
+
 from __future__ import annotations
 
 import json
@@ -35,6 +36,7 @@ class DuplicateUserError(StorageError):
 # ---------------------------------------------------------------------------
 # Backend interface
 # ---------------------------------------------------------------------------
+
 
 class StorageBackend:
     """Minimal document-store interface (collection -> key -> document).
@@ -125,7 +127,9 @@ class JsonFileBackend(StorageBackend):
 
     def all(self, collection: str) -> "dict[str, dict]":
         with self._lock:
-            return {k: dict(v) for k, v in self._collections.get(collection, {}).items()}
+            return {
+                k: dict(v) for k, v in self._collections.get(collection, {}).items()
+            }
 
     def flush(self) -> None:
         with self._lock:
@@ -177,6 +181,7 @@ def build_backend() -> StorageBackend:
 # Domain models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class User:
     username: str
@@ -218,6 +223,7 @@ class Simulation:
 # Store facade (thread-safe)
 # ---------------------------------------------------------------------------
 
+
 class Store:
     def __init__(self, backend: StorageBackend) -> None:
         self._backend = backend
@@ -248,7 +254,9 @@ class Store:
             )
 
     # -- users ---------------------------------------------------------------
-    def create_user(self, username: str, hashed_password: str, role: str = "user") -> User:
+    def create_user(
+        self, username: str, hashed_password: str, role: str = "user"
+    ) -> User:
         with self._lock:
             if username in self.users:
                 raise DuplicateUserError(f"username already taken: {username}")

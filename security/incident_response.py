@@ -4,6 +4,7 @@ Uso:
   python security/incident_response.py --title "XSS attempt" --severity high
   python -c "from security.incident_response import create_incident; create_incident('test', severity='medium')"
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,8 +20,12 @@ from security.audit import AuditLogger
 SEVERITIES = ("low", "medium", "high", "critical")
 SEVERITY_SCORE = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
-INCIDENTS_DIR = Path(os.getenv("INCIDENTS_DIR") or Path(__file__).parent.parent / "incidents")
-AUDIT_PATH = os.getenv("AUDIT_LOG_PATH") or str(Path(__file__).parent.parent / "logs" / "audit.log")
+INCIDENTS_DIR = Path(
+    os.getenv("INCIDENTS_DIR") or Path(__file__).parent.parent / "incidents"
+)
+AUDIT_PATH = os.getenv("AUDIT_LOG_PATH") or str(
+    Path(__file__).parent.parent / "logs" / "audit.log"
+)
 
 
 def _now_iso() -> str:
@@ -77,25 +82,44 @@ def create_incident(
             actor=actor,
             action="incident_created",
             resource=incident_id,
-            details={"title": title, "severity": severity, "indicators": indicators or []},
+            details={
+                "title": title,
+                "severity": severity,
+                "indicators": indicators or [],
+            },
         )
         # log extra para critical/high
         if severity in ("high", "critical"):
-            print(f"[ALERT] {incident_id} severity={severity} — notificação registrada em audit log")
+            print(
+                f"[ALERT] {incident_id} severity={severity} — notificação registrada em audit log"
+            )
 
     print(f"[incident] {incident_id} criado em {out_path}")
     return incident
 
 
 def _next_steps(severity: str) -> List[str]:
-    base = ["Preservar evidência (copiar audit.log, metrics)", "Classificar e atribuir owner", "Conter (isolar host/IP)"]
+    base = [
+        "Preservar evidência (copiar audit.log, metrics)",
+        "Classificar e atribuir owner",
+        "Conter (isolar host/IP)",
+    ]
     if severity in ("high", "critical"):
-        base += ["Erradicar causa raiz + rebuild imagens", "Rotacionar segredos", "Comunicar stakeholders"]
+        base += [
+            "Erradicar causa raiz + rebuild imagens",
+            "Rotacionar segredos",
+            "Comunicar stakeholders",
+        ]
     base += ["Recuperar de backup íntegro se necessário", "Postmortem em 5 dias"]
     return base
 
 
-def update_incident(incident_id: str, status: Optional[str] = None, phase: Optional[str] = None, notes: Optional[str] = None) -> Dict[str, Any]:
+def update_incident(
+    incident_id: str,
+    status: Optional[str] = None,
+    phase: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> Dict[str, Any]:
     path = INCIDENTS_DIR / f"{incident_id}.json"
     if not path.exists():
         raise FileNotFoundError(f"incidente não encontrado: {path}")
@@ -121,4 +145,10 @@ if __name__ == "__main__":
     p.add_argument("--indicators", nargs="*", default=[])
     p.add_argument("--actor", default="sec-cli")
     args = p.parse_args()
-    create_incident(args.title, severity=args.severity, description=args.description, indicators=args.indicators, actor=args.actor)
+    create_incident(
+        args.title,
+        severity=args.severity,
+        description=args.description,
+        indicators=args.indicators,
+        actor=args.actor,
+    )

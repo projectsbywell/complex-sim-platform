@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class InferenceConfig:
     """Configuration for the inference engine."""
+
     batch_size: int = 256
     confidence_threshold: float = 0.5
     output_proba: bool = True
@@ -102,7 +103,7 @@ class ModelInferencer:
         batch_size = batch_size or self.config.batch_size
         results = []
         for i in range(0, len(X), batch_size):
-            batch = X[i:i + batch_size]
+            batch = X[i : i + batch_size]
             results.append(self.predict(batch))
         return np.concatenate(results)
 
@@ -116,12 +117,16 @@ class ModelInferencer:
 
         results = []
         for i in range(len(X)):
-            confidence = float(proba[i]) if np.isscalar(proba[i]) else float(np.max(proba[i]))
-            results.append({
-                "prediction": float(predictions[i]),
-                "confidence": confidence,
-                "above_threshold": confidence >= self.config.confidence_threshold,
-            })
+            confidence = (
+                float(proba[i]) if np.isscalar(proba[i]) else float(np.max(proba[i]))
+            )
+            results.append(
+                {
+                    "prediction": float(predictions[i]),
+                    "confidence": confidence,
+                    "above_threshold": confidence >= self.config.confidence_threshold,
+                }
+            )
         return results
 
     def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
@@ -137,7 +142,11 @@ class ModelInferencer:
 
         # Mean relative error
         nonzero = np.abs(y) > 1e-10
-        mre = float(np.mean(np.abs((predictions[nonzero] - y[nonzero]) / y[nonzero]))) if np.any(nonzero) else 0.0
+        mre = (
+            float(np.mean(np.abs((predictions[nonzero] - y[nonzero]) / y[nonzero])))
+            if np.any(nonzero)
+            else 0.0
+        )
 
         return {
             "mse": mse,
@@ -160,7 +169,9 @@ class ModelInferencer:
         for i, pred in enumerate(predictions):
             entry = pred
             if records and i < len(records):
-                entry["_original"] = {k: v for k, v in records[i].items() if not k.startswith("_")}
+                entry["_original"] = {
+                    k: v for k, v in records[i].items() if not k.startswith("_")
+                }
             output.append(entry)
 
         with open(filepath, "w") as fh:
@@ -189,7 +200,9 @@ def infer(
     inferencer = ModelInferencer(config)
     inferencer.load(checkpoint_path)
     predictions = inferencer.predict(X)
-    metrics = inferencer.evaluate(X, np.zeros(len(X)))  # Placeholder - pass real y if available
+    metrics = inferencer.evaluate(
+        X, np.zeros(len(X))
+    )  # Placeholder - pass real y if available
     return {
         "predictions": predictions.tolist(),
         "n_samples": len(X),

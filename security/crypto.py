@@ -5,6 +5,7 @@ crypto.py — criptografia em repouso + hashing + TLS checklist
 - TLS checklist constante + função tls_self_check()
 - Sem segredos hardcoded: lê de env APP_ENCRYPTION_KEY / HMAC_SECRET
 """
+
 from __future__ import annotations
 
 import base64
@@ -17,12 +18,14 @@ from typing import Dict, List
 # --- detecção de libs ---
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
+
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
 
 try:
     import bcrypt  # type: ignore
+
     HAS_BCRYPT = True
 except ImportError:
     HAS_BCRYPT = False
@@ -59,7 +62,9 @@ def _derive_key(key_str: str) -> bytes:
 
 
 def _get_key(key: str | None) -> bytes:
-    env_key = key or os.getenv("APP_ENCRYPTION_KEY") or os.getenv("ENCRYPTION_KEY") or ""
+    env_key = (
+        key or os.getenv("APP_ENCRYPTION_KEY") or os.getenv("ENCRYPTION_KEY") or ""
+    )
     return _derive_key(env_key)
 
 
@@ -77,7 +82,9 @@ def encrypt_at_rest(plaintext: str, key: str | None = None) -> str:
         return base64.b64encode(nonce + ct).decode()
     else:
         if os.getenv("ENV") == "production":
-            raise RuntimeError("cryptography required in production (insecure fallback disabled)")
+            raise RuntimeError(
+                "cryptography required in production (insecure fallback disabled)"
+            )
         # FALLBACK XOR — INSEGURO, apenas para testes sem cryptography
         enc = bytes(b ^ k[i % len(k)] for i, b in enumerate(pt))
         return FALLBACK_WARNING + ":" + base64.b64encode(enc).decode()
@@ -93,7 +100,9 @@ def decrypt_at_rest(token: str, key: str | None = None) -> str:
         return pt.decode()
     # AESGCM path
     if not HAS_CRYPTO:
-        raise ValueError("Token AES-GCM requer 'cryptography' instalada; token não é fallback XOR")
+        raise ValueError(
+            "Token AES-GCM requer 'cryptography' instalada; token não é fallback XOR"
+        )
     raw = base64.b64decode(token.encode())
     nonce, ct = raw[:12], raw[12:]
     aes = AESGCM(k)
@@ -102,6 +111,7 @@ def decrypt_at_rest(token: str, key: str | None = None) -> str:
 
 
 # --- Hashing de senhas ---
+
 
 def hash_password(password: str) -> str:
     """Hash de senha: bcrypt se disponível, senão PBKDF2-HMAC-SHA256."""
@@ -131,6 +141,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 # --- TLS self-check (heurístico) ---
 
+
 def tls_self_check(host: str = "localhost", port: int = 443) -> Dict[str, str]:
     """
     Checklist estático + tentativa simples de conexão TLS.
@@ -140,6 +151,7 @@ def tls_self_check(host: str = "localhost", port: int = 443) -> Dict[str, str]:
     # tentativa de socket TLS básica (stdlib)
     try:
         import socket, ssl
+
         ctx = ssl.create_default_context()
         with socket.create_connection((host, port), timeout=3) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as ssock:
@@ -147,7 +159,9 @@ def tls_self_check(host: str = "localhost", port: int = 443) -> Dict[str, str]:
                 cert = ssock.getpeercert()
                 result["cert_subject"] = str(cert.get("subject")) if cert else "no cert"
     except Exception as e:
-        result["tls_connect"] = f"não conectado ({e}) — verifique se o serviço expõe TLS em {host}:{port}"
+        result["tls_connect"] = (
+            f"não conectado ({e}) — verifique se o serviço expõe TLS em {host}:{port}"
+        )
     return result
 
 

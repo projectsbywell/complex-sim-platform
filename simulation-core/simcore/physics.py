@@ -47,8 +47,13 @@ class _Body:
     __slots__ = ("x", "y", "vx", "vy", "mass", "radius")
 
     def __init__(
-        self, x: float, y: float, vx: float, vy: float,
-        mass: float, radius: float,
+        self,
+        x: float,
+        y: float,
+        vx: float,
+        vy: float,
+        mass: float,
+        radius: float,
     ) -> None:
         self.x = x
         self.y = y
@@ -95,7 +100,7 @@ class PhysicsSimulation(Simulatable):
         min_d = a.radius + b.radius
         if dist_sq >= min_d * min_d or dist_sq == 0.0:
             return
-        dist = dist_sq ** 0.5
+        dist = dist_sq**0.5
         nx, ny = dx / dist, dy / dist
 
         dvx = a.vx - b.vx
@@ -136,8 +141,8 @@ class PhysicsSimulation(Simulatable):
         # --- Integration (semi-implicit Euler) ---
         for b in bodies:
             b.vy += g * dt
-            b.vx *= (1 - mu * dt)
-            b.vy *= (1 - mu * dt)
+            b.vx *= 1 - mu * dt
+            b.vy *= 1 - mu * dt
             b.x += b.vx * dt
             b.y += b.vy * dt
 
@@ -147,19 +152,19 @@ class PhysicsSimulation(Simulatable):
             if b.x - r < 0:
                 b.x = r
                 b.vx = abs(b.vx) * rest
-                b.vy *= (1 - mu)
+                b.vy *= 1 - mu
             elif b.x + r > w:
                 b.x = w - r
                 b.vx = -abs(b.vx) * rest
-                b.vy *= (1 - mu)
+                b.vy *= 1 - mu
             if b.y - r < 0:
                 b.y = r
                 b.vy = abs(b.vy) * rest
-                b.vx *= (1 - mu)
+                b.vx *= 1 - mu
             elif b.y + r > h:
                 b.y = h - r
                 b.vy = -abs(b.vy) * rest
-                b.vx *= (1 - mu)
+                b.vx *= 1 - mu
 
         # --- Body–body collisions (brute-force, fine for n << 1000) ---
         nb = len(bodies)
@@ -186,9 +191,7 @@ class PhysicsSimulation(Simulatable):
         }
 
     def set_state(self, d: Dict[str, Any]) -> None:
-        self._bodies = [
-            _Body(**bd) for bd in d["bodies"]
-        ]
+        self._bodies = [_Body(**bd) for bd in d["bodies"]]
         self._step_count = int(d.get("step", 0))
 
     def get_params(self) -> Dict[str, Any]:

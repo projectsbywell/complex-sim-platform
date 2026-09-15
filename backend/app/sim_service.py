@@ -10,6 +10,7 @@ state is persisted through the store after every mutation. All five kinds
 ``Simulatable``-style interface as the real simcore: ``step(dt)``,
 ``get_state()``, ``set_state(d)``, ``get_params()``, ``set_params(p)``.
 """
+
 from __future__ import annotations
 
 import io
@@ -52,6 +53,7 @@ class WorkLimitError(RuntimeError):
 # simcore loader
 # ---------------------------------------------------------------------------
 
+
 class SimCoreInfo:
     def __init__(self, module: Any, mode: str, version: str) -> None:
         self.module = module
@@ -77,15 +79,15 @@ def _load_simcore() -> SimCoreInfo:
     try:
         import simcore  # noqa: F401
 
-        if not (hasattr(simcore, "SimulationEngine") or hasattr(simcore, "Simulatable")):
+        if not (
+            hasattr(simcore, "SimulationEngine") or hasattr(simcore, "Simulatable")
+        ):
             raise RuntimeError("simcore does not expose SimulationEngine/Simulatable")
         version = str(getattr(simcore, "__version__", "unknown"))
         logger.info("simcore loaded: mode=real version=%s path=%s", version, path)
         return SimCoreInfo(simcore, "real", version)
     except Exception as exc:
-        logger.warning(
-            "import simcore failed (%s) — using built-in mock engines", exc
-        )
+        logger.warning("import simcore failed (%s) — using built-in mock engines", exc)
         return SimCoreInfo(None, "mock", str(exc)[:160])
 
 
@@ -118,6 +120,7 @@ def to_jsonable(obj: Any) -> Any:
 # Built-in mock engines (same interface as simcore.Simulatable)
 # ---------------------------------------------------------------------------
 
+
 class _BaseMockEngine:
     """Common machinery: params merge, clock, rolling history."""
 
@@ -138,7 +141,12 @@ class _BaseMockEngine:
         raise NotImplementedError
 
     def get_state(self) -> dict[str, Any]:
-        return {"t": self.t, "kind": self.KIND, "history": self._history_tail(), **self._state_extra()}
+        return {
+            "t": self.t,
+            "kind": self.KIND,
+            "history": self._history_tail(),
+            **self._state_extra(),
+        }
 
     def _state_extra(self) -> dict[str, Any]:
         raise NotImplementedError
@@ -156,7 +164,10 @@ class _BaseMockEngine:
         return dict(self.params)
 
     def set_params(self, p: dict) -> None:
-        self.params = {**self.params, **{k: v for k, v in p.items() if k in self.DEFAULTS}}
+        self.params = {
+            **self.params,
+            **{k: v for k, v in p.items() if k in self.DEFAULTS},
+        }
 
     # -- helpers ------------------------------------------------------------
     def _record(self, **metrics: float) -> None:
@@ -180,7 +191,9 @@ class _BaseMockEngine:
     @classmethod
     def merge_defaults(cls, params: Optional[dict]) -> dict[str, Any]:
         merged = {**cls.DEFAULTS, **(params or {})}
-        merged["record_length"] = max(10, min(5000, int(merged.get("record_length", 200))))
+        merged["record_length"] = max(
+            10, min(5000, int(merged.get("record_length", 200)))
+        )
         return merged
 
 
@@ -215,12 +228,18 @@ class ParticlesEngine(_BaseMockEngine):
                 p[1], v[1] = 2.0 - p[1], -abs(v[1])
         self.t += dt
         ke = 0.5 * sum(v[0] * v[0] + v[1] * v[1] for v in self.velocities)
-        mean_speed = sum(math.hypot(v[0], v[1]) for v in self.velocities) / len(self.velocities)
+        mean_speed = sum(math.hypot(v[0], v[1]) for v in self.velocities) / len(
+            self.velocities
+        )
         self._record(kinetic_energy=ke, mean_speed=mean_speed)
 
     def _state_extra(self) -> dict[str, Any]:
         ke = 0.5 * sum(v[0] * v[0] + v[1] * v[1] for v in self.velocities)
-        return {"positions": self.positions, "velocities": self.velocities, "kinetic_energy": ke}
+        return {
+            "positions": self.positions,
+            "velocities": self.velocities,
+            "kinetic_energy": ke,
+        }
 
     def _restore(self, d: dict) -> None:
         try:
@@ -237,7 +256,14 @@ class FluidsEngine(_BaseMockEngine):
     """Scalar-field diffusion on a grid with injected sources."""
 
     KIND = "fluids"
-    DEFAULTS = {"width": 32, "height": 32, "diffusion": 0.08, "sources": 3, "seed": 7, "record_length": 200}
+    DEFAULTS = {
+        "width": 32,
+        "height": 32,
+        "diffusion": 0.08,
+        "sources": 3,
+        "seed": 7,
+        "record_length": 200,
+    }
 
     def _init(self) -> None:
         w = max(8, min(128, int(self.params.get("width", 32))))
@@ -259,7 +285,13 @@ class FluidsEngine(_BaseMockEngine):
         new = [row[:] for row in f]
         for i in range(1, h - 1):
             for j in range(1, w - 1):
-                lap = f[i - 1][j] + f[i + 1][j] + f[i][j - 1] + f[i][j + 1] - 4.0 * f[i][j]
+                lap = (
+                    f[i - 1][j]
+                    + f[i + 1][j]
+                    + f[i][j - 1]
+                    + f[i][j + 1]
+                    - 4.0 * f[i][j]
+                )
                 new[i][j] += lap * d
         self.field = [[min(1.0, max(0.0, v)) for v in row] for row in new]
         self.t += dt
@@ -270,8 +302,13 @@ class FluidsEngine(_BaseMockEngine):
     def _state_extra(self) -> dict[str, Any]:
         mass = sum(sum(row) for row in self.field)
         mx = max(max(row) for row in self.field)
-        return {"width": self.params["width"], "height": self.params["height"],
-                "field": self.field, "total_mass": mass, "max_density": mx}
+        return {
+            "width": self.params["width"],
+            "height": self.params["height"],
+            "field": self.field,
+            "total_mass": mass,
+            "max_density": mx,
+        }
 
     def _restore(self, d: dict) -> None:
         try:
@@ -287,7 +324,14 @@ class PhysicsEngine(_BaseMockEngine):
     """Damped pendulum (theta/omega with total mechanical energy)."""
 
     KIND = "physics"
-    DEFAULTS = {"gravity": 9.81, "length": 1.0, "damping": 0.1, "theta0": 1.5, "omega0": 0.0, "record_length": 200}
+    DEFAULTS = {
+        "gravity": 9.81,
+        "length": 1.0,
+        "damping": 0.1,
+        "theta0": 1.5,
+        "omega0": 0.0,
+        "record_length": 200,
+    }
 
     def _init(self) -> None:
         self.theta = float(self.params.get("theta0", 1.5))
@@ -300,13 +344,17 @@ class PhysicsEngine(_BaseMockEngine):
         self.omega += (-(g / length) * math.sin(self.theta) - damping * self.omega) * dt
         self.theta += self.omega * dt
         self.t += dt
-        energy = 0.5 * length * length * self.omega * self.omega + g * length * (1.0 - math.cos(self.theta))
+        energy = 0.5 * length * length * self.omega * self.omega + g * length * (
+            1.0 - math.cos(self.theta)
+        )
         self._record(theta=self.theta, omega=self.omega, energy=energy)
 
     def _state_extra(self) -> dict[str, float]:
         g = abs(float(self.params.get("gravity", 9.81)))
         length = max(1e-6, abs(float(self.params.get("length", 1.0))))
-        energy = 0.5 * length * length * self.omega * self.omega + g * length * (1.0 - math.cos(self.theta))
+        energy = 0.5 * length * length * self.omega * self.omega + g * length * (
+            1.0 - math.cos(self.theta)
+        )
         return {"theta": self.theta, "omega": self.omega, "energy": energy}
 
     def _restore(self, d: dict) -> None:
@@ -321,7 +369,14 @@ class NeuralEngine(_BaseMockEngine):
     """Rate-coded recurrent network with sigmoid activation."""
 
     KIND = "neural"
-    DEFAULTS = {"n": 16, "tau": 10.0, "input": 0.5, "coupling": 0.6, "seed": 3, "record_length": 200}
+    DEFAULTS = {
+        "n": 16,
+        "tau": 10.0,
+        "input": 0.5,
+        "coupling": 0.6,
+        "seed": 3,
+        "record_length": 200,
+    }
 
     @staticmethod
     def _sigmoid(x: float) -> float:
@@ -337,8 +392,7 @@ class NeuralEngine(_BaseMockEngine):
         rng = random.Random(int(self.params.get("seed", 3)))
         coupling = abs(float(self.params.get("coupling", 0.6)))
         self.weights = [
-            [(rng.random() - 0.5) * 2.0 * coupling for _ in range(n)]
-            for _ in range(n)
+            [(rng.random() - 0.5) * 2.0 * coupling for _ in range(n)] for _ in range(n)
         ]
         self.rates = [rng.random() * 0.5 for _ in range(n)]
 
@@ -364,8 +418,13 @@ class NeuralEngine(_BaseMockEngine):
     def _state_extra(self) -> dict[str, Any]:
         n = int(self.params["n"])
         acts = [self._sigmoid(r) for r in self.rates]
-        return {"n": n, "rates": self.rates, "weights": self.weights,
-                "mean_rate": sum(self.rates) / n, "mean_activity": sum(acts) / n}
+        return {
+            "n": n,
+            "rates": self.rates,
+            "weights": self.weights,
+            "mean_rate": sum(self.rates) / n,
+            "mean_activity": sum(acts) / n,
+        }
 
     def _restore(self, d: dict) -> None:
         try:
@@ -385,8 +444,15 @@ class BioEngine(_BaseMockEngine):
     """Lotka-Volterra predator/prey populations."""
 
     KIND = "bio"
-    DEFAULTS = {"prey0": 40.0, "predator0": 9.0, "alpha": 0.1, "beta": 0.02,
-                "gamma": 0.1, "delta": 0.01, "record_length": 200}
+    DEFAULTS = {
+        "prey0": 40.0,
+        "predator0": 9.0,
+        "alpha": 0.1,
+        "beta": 0.02,
+        "gamma": 0.1,
+        "delta": 0.01,
+        "record_length": 200,
+    }
 
     def _init(self) -> None:
         self.prey = float(self.params.get("prey0", 40.0))
@@ -406,8 +472,11 @@ class BioEngine(_BaseMockEngine):
         self._record(prey=self.prey, predators=self.predators)
 
     def _state_extra(self) -> dict[str, float]:
-        return {"prey": self.prey, "predators": self.predators,
-                "ratio": self.predators / max(1e-9, self.prey)}
+        return {
+            "prey": self.prey,
+            "predators": self.predators,
+            "ratio": self.predators / max(1e-9, self.prey),
+        }
 
     def _restore(self, d: dict) -> None:
         try:
@@ -427,11 +496,16 @@ _MOCK_ENGINES: dict[str, type] = {
 # Adapter for the real simcore engines
 # ---------------------------------------------------------------------------
 
+
 def _sample_metrics(state: dict) -> dict[str, float]:
     """Derive scalar traces from any state dict (for chart histories)."""
     out: dict[str, float] = {}
     for key, value in state.items():
-        if key in ("history", "step", "loss_history", "arch") or isinstance(value, (str, bool)) or value is None:
+        if (
+            key in ("history", "step", "loss_history", "arch")
+            or isinstance(value, (str, bool))
+            or value is None
+        ):
             continue
         if isinstance(value, (int, float)):
             out[key] = float(value)
@@ -472,7 +546,10 @@ class _RealEngineAdapter:
             metrics = _sample_metrics(to_jsonable(self._real.get_state()))
         except Exception:
             metrics = {}
-        entry = {"t": round(self.t, 6), **{k: round(float(v), 6) for k, v in metrics.items()}}
+        entry = {
+            "t": round(self.t, 6),
+            **{k: round(float(v), 6) for k, v in metrics.items()},
+        }
         self.history.append(entry)
         cap = max(1, int(self.params.get("record_length", 200)))
         if len(self.history) > cap:
@@ -506,7 +583,11 @@ class _RealEngineAdapter:
         self.params = {**self.params, **p}
 
     def work_estimate(self) -> int:
-        n = self.params.get("n") or self.params.get("width") or self.params.get("grid_size")
+        n = (
+            self.params.get("n")
+            or self.params.get("width")
+            or self.params.get("grid_size")
+        )
         if n:
             n = int(n)
             return n * n
@@ -523,6 +604,7 @@ class _RealEngineAdapter:
 # ---------------------------------------------------------------------------
 # Service
 # ---------------------------------------------------------------------------
+
 
 class SimulationService:
     def __init__(self) -> None:
@@ -543,8 +625,13 @@ class SimulationService:
         return "simcore" if self._simcore.mode == "real" else "mock"
 
     # -- life-cycle ----------------------------------------------------------
-    def _build_engine(self, kind: str, params: dict, state: Optional[dict] = None,
-                      prefer_real: bool = True) -> Any:
+    def _build_engine(
+        self,
+        kind: str,
+        params: dict,
+        state: Optional[dict] = None,
+        prefer_real: bool = True,
+    ) -> Any:
         """Build the best engine for a kind: real simcore first, mock fallback."""
         if prefer_real and self._simcore.module is not None:
             try:
@@ -696,7 +783,9 @@ class SimulationService:
                 import pandas as pd
                 import pyarrow  # noqa: F401
             except ImportError as exc:
-                raise ExportUnavailableError("parquet export requires pandas + pyarrow") from exc
+                raise ExportUnavailableError(
+                    "parquet export requires pandas + pyarrow"
+                ) from exc
             frame = self._state_frame(state)
             df = pd.DataFrame({k: pd.Series(v) for k, v in frame.items()})
             buf = io.BytesIO()
@@ -712,7 +801,9 @@ class SimulationService:
         try:
             import h5py
         except ImportError as exc:
-            raise ExportUnavailableError("hdf5 export requires h5py (or tables)") from exc
+            raise ExportUnavailableError(
+                "hdf5 export requires h5py (or tables)"
+            ) from exc
         buf = io.BytesIO()
         state = sim.state
         with h5py.File(buf, "w") as f:
@@ -764,7 +855,11 @@ class SimulationService:
                         for row in value:
                             try:
                                 v = row[j] if j < len(row) else float("nan")
-                                col.append(float(v) if not isinstance(v, (list, dict)) else float("nan"))
+                                col.append(
+                                    float(v)
+                                    if not isinstance(v, (list, dict))
+                                    else float("nan")
+                                )
                             except (TypeError, ValueError):
                                 col.append(float("nan"))
                         frame[f"{key}_{j}"] = col
@@ -826,7 +921,9 @@ class SimulationService:
 
         histograms: list[dict] = []
         for name, value in state.items():
-            if name in ("kind", "history", "params", "width", "height") or isinstance(value, (str, bool)):
+            if name in ("kind", "history", "params", "width", "height") or isinstance(
+                value, (str, bool)
+            ):
                 continue
             flat = _flatten_numbers(value)
             if flat and len(flat) >= 2:
@@ -931,7 +1028,7 @@ def _describe(values: list[float]) -> dict[str, float]:
         "min": round(lo, 6),
         "max": round(hi, 6),
         "mean": round(mean, 6),
-        "std": round(variance ** 0.5, 6),
+        "std": round(variance**0.5, 6),
         "q25": round(q25, 6),
         "median": round(q50, 6),
         "q75": round(q75, 6),

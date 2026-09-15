@@ -4,6 +4,7 @@ Entries expire after ``default_ttl`` seconds (60s default) and the cache is
 bounded by ``maxsize``. Expired entries are pruned lazily to keep hot paths
 O(1)-ish.
 """
+
 from __future__ import annotations
 
 import threading
@@ -107,7 +108,11 @@ def cached(key_fn: Optional[Callable[..., str]] = None, ttl: Optional[float] = N
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            key = key_fn(*args, **kwargs) if key_fn else f"{fn.__module__}.{fn.__qualname__}"
+            key = (
+                key_fn(*args, **kwargs)
+                if key_fn
+                else f"{fn.__module__}.{fn.__qualname__}"
+            )
             hit = cache.get(key)
             if hit is not _MISS:
                 return hit

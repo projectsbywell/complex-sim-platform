@@ -1,4 +1,5 @@
 """Simulation routes: kinds, CRUD, step, export, report."""
+
 from __future__ import annotations
 
 import math
@@ -22,6 +23,7 @@ ExportFormat = Literal["csv", "json", "parquet", "hdf5"]
 # ---------------------------------------------------------------------------
 # Request validation (anti-injection: bounded depth, keys, lengths)
 # ---------------------------------------------------------------------------
+
 
 def validate_params(value: Any, depth: int = 0) -> None:
     """Recursively validate simulation params: shape, keys and scalar bounds."""
@@ -62,7 +64,9 @@ class CreateSimRequest(BaseModel):
     def _kind_ok(cls, value: str) -> str:
         value = value.strip().lower()
         if value not in service.kinds():
-            raise ValueError(f"unknown simulation kind {value!r}; allowed: {service.kinds()}")
+            raise ValueError(
+                f"unknown simulation kind {value!r}; allowed: {service.kinds()}"
+            )
         return value
 
     @field_validator("params")
@@ -81,6 +85,7 @@ class StepRequest(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _sim_or_404(sim_id: str) -> Simulation:
     sim = store.get_simulation(sim_id)
     if sim is None:
@@ -98,6 +103,7 @@ def _authorize(sim: Simulation, user) -> Simulation:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.get(
     "/kinds",

@@ -3,6 +3,7 @@ model_registry.py — registro de modelos (JSON) + métricas
 Armazena em pipeline/registry.json (ou path via MODEL_REGISTRY_PATH).
 Stdlib + numpy opcional. Sem dependências pesadas.
 """
+
 from __future__ import annotations
 
 import json
@@ -14,11 +15,14 @@ from typing import Any, Dict, List, Optional
 
 try:
     import numpy as np  # type: ignore
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
 
-DEFAULT_PATH = Path(os.getenv("MODEL_REGISTRY_PATH") or Path(__file__).parent / "registry.json")
+DEFAULT_PATH = Path(
+    os.getenv("MODEL_REGISTRY_PATH") or Path(__file__).parent / "registry.json"
+)
 
 
 def _now() -> str:
@@ -71,7 +75,9 @@ class ModelRegistry:
         self._write(data)
         return entry
 
-    def list(self, name: Optional[str] = None, tag: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list(
+        self, name: Optional[str] = None, tag: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         data = self._read()
         models = data.get("models", [])
         if name:
@@ -86,13 +92,19 @@ class ModelRegistry:
                 return m
         return None
 
-    def get_best(self, metric: str, higher_is_better: bool = False) -> Optional[Dict[str, Any]]:
+    def get_best(
+        self, metric: str, higher_is_better: bool = False
+    ) -> Optional[Dict[str, Any]]:
         models = [m for m in self.list() if metric in m.get("metrics", {})]
         if not models:
             return None
-        return sorted(models, key=lambda m: m["metrics"][metric], reverse=higher_is_better)[0]
+        return sorted(
+            models, key=lambda m: m["metrics"][metric], reverse=higher_is_better
+        )[0]
 
-    def update_metrics(self, model_id: str, metrics: Dict[str, float]) -> Dict[str, Any]:
+    def update_metrics(
+        self, model_id: str, metrics: Dict[str, float]
+    ) -> Dict[str, Any]:
         data = self._read()
         for m in data["models"]:
             if m["id"] == model_id:
@@ -119,8 +131,20 @@ class ModelRegistry:
 
 if __name__ == "__main__":
     reg = ModelRegistry("/tmp/test_registry.json")
-    a = reg.register("sir_predictor", version="1.0.0", metrics={"mae": 2.1, "r2": 0.92}, params={"lr": 0.01}, tags=["sir"])
-    b = reg.register("sir_predictor", version="1.1.0", metrics={"mae": 1.8, "r2": 0.95}, params={"lr": 0.005}, tags=["sir"])
+    a = reg.register(
+        "sir_predictor",
+        version="1.0.0",
+        metrics={"mae": 2.1, "r2": 0.92},
+        params={"lr": 0.01},
+        tags=["sir"],
+    )
+    b = reg.register(
+        "sir_predictor",
+        version="1.1.0",
+        metrics={"mae": 1.8, "r2": 0.95},
+        params={"lr": 0.005},
+        tags=["sir"],
+    )
     print(reg.list())
     print("best mae:", reg.get_best("mae", higher_is_better=False))
     print("OK")

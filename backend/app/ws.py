@@ -6,6 +6,7 @@ current state, then sends ``{"dt": 0.016, "steps": 1}`` to advance the
 simulation. The resulting state is broadcast to every client connected to the
 same simulation room.
 """
+
 from __future__ import annotations
 
 import json
@@ -132,10 +133,14 @@ async def simulations_ws(websocket: WebSocket, sim_id: str) -> None:
             try:
                 msg = json.loads(raw)
             except (TypeError, ValueError):
-                await websocket.send_json({"type": "error", "detail": "invalid JSON message"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "invalid JSON message"}
+                )
                 continue
             if not isinstance(msg, dict):
-                await websocket.send_json({"type": "error", "detail": "message must be a JSON object"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "message must be a JSON object"}
+                )
                 continue
 
             action = msg.get("action", "step")
@@ -143,7 +148,9 @@ async def simulations_ws(websocket: WebSocket, sim_id: str) -> None:
             if action == "get_state":
                 current = store.get_simulation(sim_id)
                 if current is None:
-                    await websocket.send_json({"type": "error", "detail": "simulation deleted"})
+                    await websocket.send_json(
+                        {"type": "error", "detail": "simulation deleted"}
+                    )
                     break
                 await websocket.send_json(
                     {
@@ -161,14 +168,21 @@ async def simulations_ws(websocket: WebSocket, sim_id: str) -> None:
 
             if action != "step":
                 await websocket.send_json(
-                    {"type": "error", "detail": f"unknown action {action!r}; use 'step' or 'get_state'"}
+                    {
+                        "type": "error",
+                        "detail": f"unknown action {action!r}; use 'step' or 'get_state'",
+                    }
                 )
                 continue
 
             # per-connection message throttle
             if not ws_guard.allow(f"ws:{sim_id}:{ip}"):
                 await websocket.send_json(
-                    {"type": "error", "detail": "message rate limit exceeded", "retry_after": 60}
+                    {
+                        "type": "error",
+                        "detail": "message rate limit exceeded",
+                        "retry_after": 60,
+                    }
                 )
                 await websocket.close(code=1008, reason="message rate limit")
                 break
@@ -177,13 +191,19 @@ async def simulations_ws(websocket: WebSocket, sim_id: str) -> None:
                 dt = float(msg.get("dt", 0.016))
                 steps = int(msg.get("steps", 1))
             except (TypeError, ValueError):
-                await websocket.send_json({"type": "error", "detail": "dt and steps must be numbers"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "dt and steps must be numbers"}
+                )
                 continue
             if not (0.0 < dt <= 10.0):
-                await websocket.send_json({"type": "error", "detail": "dt must be in (0, 10]"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "dt must be in (0, 10]"}
+                )
                 continue
             if not (1 <= steps <= 10_000):
-                await websocket.send_json({"type": "error", "detail": "steps must be in [1, 10000]"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "steps must be in [1, 10000]"}
+                )
                 continue
 
             try:
@@ -191,7 +211,9 @@ async def simulations_ws(websocket: WebSocket, sim_id: str) -> None:
                     service.step, sim_id, dt, steps
                 )
             except KeyError:
-                await websocket.send_json({"type": "error", "detail": "simulation not found"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "simulation not found"}
+                )
                 break
             except WorkLimitError as exc:
                 await websocket.send_json({"type": "error", "detail": str(exc)})
@@ -217,7 +239,9 @@ async def simulations_ws(websocket: WebSocket, sim_id: str) -> None:
             extra={"simulation_id": sim_id, "user": user.username, "exc": repr(exc)},
         )
         try:
-            await websocket.send_json({"type": "error", "detail": f"server error: {exc}"})
+            await websocket.send_json(
+                {"type": "error", "detail": f"server error: {exc}"}
+            )
         except Exception:
             pass
     finally:

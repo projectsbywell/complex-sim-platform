@@ -76,7 +76,9 @@ class PublicAPICollector(BaseCollector):
         self.endpoint = endpoint.strip("/")
         self.timeout = timeout
         self.headers = headers or {"User-Agent": "complex-sim-platform/1.0"}
-        self._url = f"{self.base_url}/{self.endpoint}" if self.endpoint else self.base_url
+        self._url = (
+            f"{self.base_url}/{self.endpoint}" if self.endpoint else self.base_url
+        )
 
     def collect(self, n: int = 1) -> List[Dict[str, Any]]:
         """Fetch n records from the public API endpoint."""
@@ -143,7 +145,9 @@ class CSVCollector(BaseCollector):
     def stream(self) -> Iterator[Dict[str, Any]]:
         """Yield CSV rows in an infinite loop."""
         while True:
-            batch = self.collect(n=max(1, self.records_collected + 1 - self.records_collected))
+            batch = self.collect(
+                n=max(1, self.records_collected + 1 - self.records_collected)
+            )
             for rec in batch:
                 yield rec
 
@@ -176,7 +180,9 @@ class SyntheticStreamCollector(BaseCollector):
         self.drift = drift
         self.noise_scale = noise_scale
         self._step = 0
-        self._trend = {k: self._rng.normal(0, 0.01) for k in schema if schema[k] in (float, int)}
+        self._trend = {
+            k: self._rng.normal(0, 0.01) for k in schema if schema[k] in (float, int)
+        }
 
     def collect(self, n: int = 1) -> List[Dict[str, Any]]:
         """Generate n synthetic records following the schema."""
@@ -185,7 +191,11 @@ class SyntheticStreamCollector(BaseCollector):
             record = self._record_header()
             record["_source"] = "synthetic://stream"
             for field, ftype in self.schema.items():
-                base = self._rng.normal(0, 1) if ftype == float else self._rng.integers(0, 100)
+                base = (
+                    self._rng.normal(0, 1)
+                    if ftype == float
+                    else self._rng.integers(0, 100)
+                )
                 noise = self._rng.normal(0, self.noise_scale)
                 trend = self._trend.get(field, 0) * self._step * self.drift
                 if ftype == float:
@@ -215,9 +225,7 @@ class SyntheticStreamCollector(BaseCollector):
         self.noise_scale = scale
 
 
-def make_collector(
-    kind: str, config: Dict[str, Any], **kwargs
-) -> BaseCollector:
+def make_collector(kind: str, config: Dict[str, Any], **kwargs) -> BaseCollector:
     """Factory function to create a collector by name."""
     if kind == "api":
         return PublicAPICollector(**config, **kwargs)

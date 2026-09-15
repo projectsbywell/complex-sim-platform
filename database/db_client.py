@@ -4,6 +4,7 @@ db_client.py — wrapper Python para Complex Sim Platform
 - API estável: Database.save_sim / load_sim / log_metric / get_metrics / etc.
 - stdlib + psycopg2 opcional + sqlite3. Sem segredos hardcoded (lê env).
 """
+
 from __future__ import annotations
 
 import json
@@ -17,6 +18,7 @@ from typing import Any, Dict, List, Optional
 try:
     import psycopg2  # type: ignore
     import psycopg2.extras  # type: ignore
+
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
@@ -32,7 +34,11 @@ class Database:
     def __init__(self, dsn: Optional[str] = None, sqlite_path: Optional[str] = None):
         # DSN via env (não hardcoded)
         self.dsn = dsn or os.getenv("DATABASE_URL") or self._build_dsn_from_env()
-        self.sqlite_path = Path(sqlite_path or os.getenv("SQLITE_PATH") or str(Path(__file__).parent / "local.db"))
+        self.sqlite_path = Path(
+            sqlite_path
+            or os.getenv("SQLITE_PATH")
+            or str(Path(__file__).parent / "local.db")
+        )
         self.backend: str = "sqlite"  # será atualizado
         self._pg_conn = None
         self._sqlite_conn: Optional[sqlite3.Connection] = None
@@ -72,11 +78,12 @@ class Database:
 
     # --- sqlite init ---
     def _init_sqlite(self) -> None:
-        self._sqlite_conn = sqlite3.connect(str(self.sqlite_path), check_same_thread=False)
+        self._sqlite_conn = sqlite3.connect(
+            str(self.sqlite_path), check_same_thread=False
+        )
         self._sqlite_conn.row_factory = sqlite3.Row
         self._sqlite_conn.execute("PRAGMA journal_mode=WAL;")
-        self._sqlite_conn.executescript(
-            """
+        self._sqlite_conn.executescript("""
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 email TEXT UNIQUE NOT NULL,
@@ -125,8 +132,7 @@ class Database:
                 ip TEXT,
                 request_id TEXT
             );
-            """
-        )
+            """)
         self._sqlite_conn.commit()
 
     # --- helpers ---
@@ -177,7 +183,9 @@ class Database:
                 return d
         else:
             assert self._sqlite_conn is not None
-            cur = self._sqlite_conn.execute("SELECT * FROM simulations WHERE id=?", (sim_id,))
+            cur = self._sqlite_conn.execute(
+                "SELECT * FROM simulations WHERE id=?", (sim_id,)
+            )
             row = cur.fetchone()
             if not row:
                 return None
@@ -185,29 +193,47 @@ class Database:
             d["config"] = json.loads(d["config"]) if d.get("config") else {}
             return d
 
-    def list_sims(self, limit: int = 50, owner_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def list_sims(
+        self, limit: int = 50, owner_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         if self.backend == "postgres" and self._pg_conn:
             with self._pg_cursor() as cur:
                 if owner_id is not None:
-                    cur.execute("SELECT * FROM simulations WHERE owner_id=%s ORDER BY id DESC LIMIT %s", (owner_id, limit))
+                    cur.execute(
+                        "SELECT * FROM simulations WHERE owner_id=%s ORDER BY id DESC LIMIT %s",
+                        (owner_id, limit),
+                    )
                 else:
-                    cur.execute("SELECT * FROM simulations ORDER BY id DESC LIMIT %s", (limit,))
+                    cur.execute(
+                        "SELECT * FROM simulations ORDER BY id DESC LIMIT %s", (limit,)
+                    )
                 return [dict(r) for r in cur.fetchall()]
         else:
             assert self._sqlite_conn is not None
             if owner_id is not None:
-                cur = self._sqlite_conn.execute("SELECT * FROM simulations WHERE owner_id=? ORDER BY id DESC LIMIT ?", (owner_id, limit))
+                cur = self._sqlite_conn.execute(
+                    "SELECT * FROM simulations WHERE owner_id=? ORDER BY id DESC LIMIT ?",
+                    (owner_id, limit),
+                )
             else:
-                cur = self._sqlite_conn.execute("SELECT * FROM simulations ORDER BY id DESC LIMIT ?", (limit,))
+                cur = self._sqlite_conn.execute(
+                    "SELECT * FROM simulations ORDER BY id DESC LIMIT ?", (limit,)
+                )
             rows = [dict(r) for r in cur.fetchall()]
             for r in rows:
-                r["config"] = json.loads(r["config"]) if isinstance(r.get("config"), str) else r.get("config")
+                r["config"] = (
+                    json.loads(r["config"])
+                    if isinstance(r.get("config"), str)
+                    else r.get("config")
+                )
             return rows
 
     # =====================
     # Runs
     # =====================
-    def create_run(self, simulation_id: int, params: Optional[Dict[str, Any]] = None) -> int:
+    def create_run(
+        self, simulation_id: int, params: Optional[Dict[str, Any]] = None
+    ) -> int:
         params = params or {}
         now = _utcnow_iso()
         if self.backend == "postgres" and self._pg_conn:
@@ -226,36 +252,65 @@ class Database:
             self._sqlite_conn.commit()
             return int(cur.lastrowid)
 
-    def update_run_status(self, run_id: int, status: str, result_summary: Optional[Dict[str, Any]] = None) -> None:
+    def update_run_status(
+        self, run_id: int, status: str, result_summary: Optional[Dict[str, Any]] = None
+    ) -> None:
         now = _utcnow_iso()
         if self.backend == "postgres" and self._pg_conn:
             with self._pg_cursor() as cur:
                 if status == "running":
-                    cur.execute("UPDATE runs SET status=%s, started_at=%s WHERE id=%s", (status, now, run_id))
+                    cur.execute(
+                        "UPDATE runs SET status=%s, started_at=%s WHERE id=%s",
+                        (status, now, run_id),
+                    )
                 elif status in ("completed", "failed"):
                     cur.execute(
                         "UPDATE runs SET status=%s, finished_at=%s, result_summary=%s::jsonb WHERE id=%s",
-                        (status, now, json.dumps(result_summary) if result_summary else None, run_id),
+                        (
+                            status,
+                            now,
+                            json.dumps(result_summary) if result_summary else None,
+                            run_id,
+                        ),
                     )
                 else:
-                    cur.execute("UPDATE runs SET status=%s WHERE id=%s", (status, run_id))
+                    cur.execute(
+                        "UPDATE runs SET status=%s WHERE id=%s", (status, run_id)
+                    )
         else:
             assert self._sqlite_conn is not None
             if status == "running":
-                self._sqlite_conn.execute("UPDATE runs SET status=?, started_at=? WHERE id=?", (status, now, run_id))
+                self._sqlite_conn.execute(
+                    "UPDATE runs SET status=?, started_at=? WHERE id=?",
+                    (status, now, run_id),
+                )
             elif status in ("completed", "failed"):
                 self._sqlite_conn.execute(
                     "UPDATE runs SET status=?, finished_at=?, result_summary=? WHERE id=?",
-                    (status, now, json.dumps(result_summary) if result_summary else None, run_id),
+                    (
+                        status,
+                        now,
+                        json.dumps(result_summary) if result_summary else None,
+                        run_id,
+                    ),
                 )
             else:
-                self._sqlite_conn.execute("UPDATE runs SET status=? WHERE id=?", (status, run_id))
+                self._sqlite_conn.execute(
+                    "UPDATE runs SET status=? WHERE id=?", (status, run_id)
+                )
             self._sqlite_conn.commit()
 
     # =====================
     # Metrics
     # =====================
-    def log_metric(self, run_id: int, metric: str, value: float, labels: Optional[Dict[str, Any]] = None, ts: Optional[str] = None) -> None:
+    def log_metric(
+        self,
+        run_id: int,
+        metric: str,
+        value: float,
+        labels: Optional[Dict[str, Any]] = None,
+        ts: Optional[str] = None,
+    ) -> None:
         """Registra ponto de série temporal."""
         ts = ts or _utcnow_iso()
         labels = labels or {}
@@ -273,7 +328,9 @@ class Database:
             )
             self._sqlite_conn.commit()
 
-    def get_metrics(self, run_id: int, metric: Optional[str] = None, limit: int = 1000) -> List[Dict[str, Any]]:
+    def get_metrics(
+        self, run_id: int, metric: Optional[str] = None, limit: int = 1000
+    ) -> List[Dict[str, Any]]:
         if self.backend == "postgres" and self._pg_conn:
             with self._pg_cursor() as cur:
                 if metric:
@@ -282,19 +339,28 @@ class Database:
                         (run_id, metric, limit),
                     )
                 else:
-                    cur.execute("SELECT * FROM metrics_timeseries WHERE run_id=%s ORDER BY time DESC LIMIT %s", (run_id, limit))
+                    cur.execute(
+                        "SELECT * FROM metrics_timeseries WHERE run_id=%s ORDER BY time DESC LIMIT %s",
+                        (run_id, limit),
+                    )
                 return [dict(r) for r in cur.fetchall()]
         else:
             assert self._sqlite_conn is not None
             if metric:
                 cur = self._sqlite_conn.execute(
-                    "SELECT * FROM metrics_timeseries WHERE run_id=? AND metric_name=? ORDER BY time DESC LIMIT ?", (run_id, metric, limit)
+                    "SELECT * FROM metrics_timeseries WHERE run_id=? AND metric_name=? ORDER BY time DESC LIMIT ?",
+                    (run_id, metric, limit),
                 )
             else:
-                cur = self._sqlite_conn.execute("SELECT * FROM metrics_timeseries WHERE run_id=? ORDER BY time DESC LIMIT ?", (run_id, limit))
+                cur = self._sqlite_conn.execute(
+                    "SELECT * FROM metrics_timeseries WHERE run_id=? ORDER BY time DESC LIMIT ?",
+                    (run_id, limit),
+                )
             return [dict(r) for r in cur.fetchall()]
 
-    def aggregate_metrics(self, run_id: int, metric: str, bucket: str = "1 minute") -> List[Dict[str, Any]]:
+    def aggregate_metrics(
+        self, run_id: int, metric: str, bucket: str = "1 minute"
+    ) -> List[Dict[str, Any]]:
         """Agregação simples compatível com ambos backends (em postgres usa time_bucket se disponível)."""
         rows = self.get_metrics(run_id, metric, limit=10000)
         # fallback python aggregation por minuto
@@ -308,12 +374,25 @@ class Database:
         out = []
         for k in sorted(buckets.keys()):
             vals = buckets[k]
-            out.append({"bucket": k, "avg": sum(vals) / len(vals), "min": min(vals), "max": max(vals), "count": len(vals)})
+            out.append(
+                {
+                    "bucket": k,
+                    "avg": sum(vals) / len(vals),
+                    "min": min(vals),
+                    "max": max(vals),
+                    "count": len(vals),
+                }
+            )
         return out
 
     # --- health ---
     def health(self) -> Dict[str, Any]:
-        return {"backend": self.backend, "has_psycopg2": HAS_PSYCOPG2, "sqlite_path": str(self.sqlite_path), "dsn_set": bool(self.dsn)}
+        return {
+            "backend": self.backend,
+            "has_psycopg2": HAS_PSYCOPG2,
+            "sqlite_path": str(self.sqlite_path),
+            "dsn_set": bool(self.dsn),
+        }
 
     def close(self) -> None:
         if self._pg_conn:
@@ -332,7 +411,9 @@ class Database:
 if __name__ == "__main__":
     db = Database()
     print(f"[db_client] backend={db.backend} health={db.health()}")
-    sid = db.save_sim({"type": "sir", "name": "demo", "config": {"beta": 0.3, "gamma": 0.1}})
+    sid = db.save_sim(
+        {"type": "sir", "name": "demo", "config": {"beta": 0.3, "gamma": 0.1}}
+    )
     print(f"saved sim id={sid}")
     rid = db.create_run(sid, {"beta": 0.3})
     db.update_run_status(rid, "running")

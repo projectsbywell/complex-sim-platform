@@ -52,6 +52,7 @@ _CELL_MULT: float = 2.0
 @dataclass
 class _Particle:
     """Internal particle record (structure-of-arrays is used externally)."""
+
     x: float
     y: float
     vx: float
@@ -168,18 +169,21 @@ class ParticleSimulation(Simulatable):
                             dist_sq = dx * dx + dy * dy
                             min_dist = self._radius[i] + self._radius[j]
                             if dist_sq < min_dist * min_dist and dist_sq > 0:
-                                self._resolve_collision(i, j, dx, dy,
-                                                        dist_sq, rest)
+                                self._resolve_collision(i, j, dx, dy, dist_sq, rest)
 
         self._step_count += 1
 
     def _resolve_collision(
-        self, i: int, j: int,
-        dx: float, dy: float,
-        dist_sq: float, restitution: float,
+        self,
+        i: int,
+        j: int,
+        dx: float,
+        dy: float,
+        dist_sq: float,
+        restitution: float,
     ) -> None:
         """Resolve an elastic collision between particles *i* and *j*."""
-        dist = dist_sq ** 0.5
+        dist = dist_sq**0.5
         nx, ny = dx / dist, dy / dist  # collision normal
 
         # Relative velocity along normal
