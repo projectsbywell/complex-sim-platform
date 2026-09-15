@@ -94,11 +94,11 @@ class RateLimitMiddleware:
         client = scope.get("client")
         direct = str(client[0]) if client else "unknown"
         if direct in ("127.0.0.1", "::1", "unknown"):
-            for header in ("cf-connecting-ip", "x-real-ip"):
+            for header in (b"cf-connecting-ip", b"x-real-ip"):
                 value = headers.get(header, "").split(",")[0].strip()
                 if value:
                     return value
-            xff = headers.get("x-forwarded-for", "")
+            xff = headers.get(b"x-forwarded-for", "")
             parts = [p.strip() for p in xff.split(",") if p.strip()]
             if parts:
                 return parts[-1]
