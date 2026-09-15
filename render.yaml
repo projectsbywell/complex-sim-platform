@@ -1,0 +1,19 @@
+# Render Blueprint — deploy do backend em 1 clique:
+# https://dashboard.render.com/select-repo?type=blueprint (aponte p/ este repo)
+services:
+  - type: web
+    name: complexsim-api
+    runtime: python
+    repo: https://github.com/projectsbywell/complex-sim-platform
+    branch: master
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://projectsbywell.github.io
