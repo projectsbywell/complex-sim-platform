@@ -67,3 +67,11 @@ python -m http.server 5173 --directory frontend # UI http://localhost:5173
 - Backend permanente: `render.yaml` (1 clique no dashboard Render) — túnel cloudflared é temporário e morre com o processo
 - CI: black + flake8 (.flake8, max 120) + bandit -ll + mypy 0 erros + pytest 34 passed/85% + pip-audit/safety escopados (triagem PYSEC-2026-1325: ecdsa/Minerva sem fix upstream, auth usa HS256)
 - Uso: no frontend, configure a base da API com `?api=https://fork-trend-sponsor-rom.trycloudflare.com` (ou campo da sidebar)
+
+---
+## 9. Varredura com ferramentas do ambiente + pentest (2026-09-15) — CI verde
+- Ferramentas usadas: nmap (scan localhost), Chromium/Playwright (quebrou: sem deps de sistema; contratos frontend↔API verificados por código + curl), curl, python-nmap/scapy presentes; sem blender/3D instalado (só ffmpeg+gnuplot+matplotlib/plotly).
+- Backend sweep (20 casos): tudo OK; WS broadcast OK; rate-limit 429 OK.
+- Pentest próprio: 11 bloqueios OK; 6 achados → 5 corrigidos: SECRET efêmera no startup, rate-limit usa último XFF/confiável (bypass do 1º XFF fechado), XSS com output-encoding em params, WorkLimit 422→429, HSTS adicionado, server header removido (--no-server-header). Docs públicos e erros 422 verbosos: decisão documentada (padrão de API).
+- Bug crítico achado no caminho: `work_estimate` do motor real não lia `size` (fluidos) e subestimava 10x → request de 10000 steps passava do budget e computava por minutos, travando o lock do sim (hang aparente). Fix: inclui size/height + x10; prova: 429 em 0.05s.
+- Caos operacional: flag inválida `--server-header=False` matou a API; religado com `--no-server-header` + setsid; watchdog + túnel republicados (nova URL em docs/LIVE_URL.md).
