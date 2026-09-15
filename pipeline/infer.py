@@ -6,7 +6,7 @@ inference on new data using numpy operations.
 
 import json
 import os
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
 import numpy as np
@@ -200,9 +200,7 @@ def infer(
     inferencer = ModelInferencer(config)
     inferencer.load(checkpoint_path)
     predictions = inferencer.predict(X)
-    metrics = inferencer.evaluate(
-        X, np.zeros(len(X))
-    )  # Placeholder - pass real y if available
+    inferencer.evaluate(X, np.zeros(len(X)))  # Placeholder - pass real y if available
     return {
         "predictions": predictions.tolist(),
         "n_samples": len(X),

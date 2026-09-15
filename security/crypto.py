@@ -1,6 +1,6 @@
 """
 crypto.py — criptografia em repouso + hashing + TLS checklist
-- AES-GCM via `cryptography` se disponível, senão fallback XOR+base64 claramente marcado (NÃO seguro para prod, apenas demo/teste).
+- AES-GCM via `cryptography` se disponível, senão fallback XOR+base64 claramente marcado (NÃO seguro para prod, apenas demo/teste).  # noqa: E501
 - Hashing: bcrypt se disponível, senão sha256 com salt (pbkdf2).
 - TLS checklist constante + função tls_self_check()
 - Sem segredos hardcoded: lê de env APP_ENCRYPTION_KEY / HMAC_SECRET
@@ -37,11 +37,11 @@ TLS_CHECKLIST: List[str] = [
     "TLS 1.2+ apenas (desativar TLS 1.0/1.1)",
     "Certificado válido (Let's Encrypt / ACM) com rotação < 90 dias",
     "HSTS: Strict-Transport-Security max-age=63072000",
-    "Cipher suites: TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, ECDHE-RSA-AES128-GCM-SHA256",
+    "Cipher suites: TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, ECDHE-RSA-AES128-GCM-SHA256",  # noqa: E501
     "OCSP stapling ativo",
     "Redirecionar HTTP -> HTTPS (301)",
     "Cert pinning ou CAA DNS se aplicável",
-    "Testar com: openssl s_client -connect host:443 -tls1_2; nmap --script ssl-enum-ciphers; https://www.ssllabs.com/ssltest/",
+    "Testar com: openssl s_client -connect host:443 -tls1_2; nmap --script ssl-enum-ciphers; https://www.ssllabs.com/ssltest/",  # noqa: E501
 ]
 
 
@@ -150,7 +150,8 @@ def tls_self_check(host: str = "localhost", port: int = 443) -> Dict[str, str]:
     result: Dict[str, str] = {f"check_{i}": v for i, v in enumerate(TLS_CHECKLIST, 1)}
     # tentativa de socket TLS básica (stdlib)
     try:
-        import socket, ssl
+        import socket
+        import ssl
 
         ctx = ssl.create_default_context()
         with socket.create_connection((host, port), timeout=3) as sock:

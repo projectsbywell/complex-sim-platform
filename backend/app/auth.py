@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Optional
 
 import bcrypt
 from fastapi import Depends, HTTPException, status

@@ -20,7 +20,6 @@ from .fluids import FluidSimulation
 from .physics import PhysicsSimulation
 from .neural import NeuralSimulation
 from .bio import BioSimulation
-from .state import to_json_str
 
 _REGISTRY: Dict[str, type] = {
     "particles": ParticleSimulation,

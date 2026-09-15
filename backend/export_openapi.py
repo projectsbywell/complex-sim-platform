@@ -11,9 +11,9 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-import yaml
+import yaml  # noqa: E402
 
-from app.main import app
+from app.main import app  # noqa: E402
 
 OUT = pathlib.Path(__file__).resolve().parent / "openapi.yaml"
 

@@ -7,7 +7,6 @@ via z-score, and comprehensive quality reporting.
 import json
 import time
 from typing import Dict, Any, List, Optional, Tuple
-from collections import Counter, defaultdict
 from datetime import datetime, timezone
 
 import numpy as np

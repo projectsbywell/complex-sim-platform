@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field, field_validator
@@ -200,6 +200,6 @@ def report_simulation(sim_id: str, user=Depends(get_current_user)) -> dict:
 
 @router.delete("/{sim_id}", summary="Delete a simulation")
 def delete_simulation(sim_id: str, user=Depends(get_current_user)) -> dict:
-    sim = _authorize(_sim_or_404(sim_id), user)
+    _authorize(_sim_or_404(sim_id), user)
     service.delete(sim_id)
     return {"deleted": True, "id": sim_id}

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    import numpy as np  # type: ignore
+    import numpy as np  # type: ignore  # noqa: F401 -- version probe, HAS_NUMPY flag below
 
     HAS_NUMPY = True
 except ImportError:

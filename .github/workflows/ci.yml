@@ -10,7 +10,7 @@ jobs:
       - run: pip install bandit flake8 black mypy pytest pytest-cov
       - run: black --check .
       - run: flake8 simulation-core/ backend/ security/ pipeline/
-      - run: bandit -r simulation-core/ backend/ security/ -ll
+      - run: bandit -r simulation-core/ backend/ security/ -l
       - run: mypy simulation-core/ backend/ --ignore-missing-imports
   test:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install pip-audit safety
       - run: pip-audit
-      - run: safety check --full-report
+      - run: safety check -r backend/requirements.txt -r simulation-core/requirements.txt -r tests/requirements-test.txt --short-report
       - run: python security/crypto.py
       - run: python security/audit.py
       - run: python security/anomaly.py

@@ -37,7 +37,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from .base import Simulatable, clamp, seed_rng
+from .base import Simulatable, seed_rng
 
 _DEFAULTS: Dict[str, Any] = {
     "size": 64,
@@ -120,7 +120,6 @@ def _pressure_jacobi(
 
     div = -∇²p  →  p_new = (Σneighbours - div) / 4
     """
-    n = p.shape[0]
     p_new = p.copy()
     for _ in range(iters):
         p_new[1:-1, 1:-1] = (

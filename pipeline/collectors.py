@@ -6,7 +6,6 @@ stream generators. All collectors return standardized dict records.
 
 import json
 import time
-import random
 import urllib.request
 import urllib.error
 from abc import ABC, abstractmethod

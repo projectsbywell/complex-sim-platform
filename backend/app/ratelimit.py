@@ -13,7 +13,6 @@ import logging
 import threading
 import time
 from collections import deque
-from typing import Optional
 
 logger = logging.getLogger("complex_sim.ratelimit")
 

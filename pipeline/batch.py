@@ -4,10 +4,8 @@ Provides cleaning, normalization, and windowed aggregation functions
 for batch data collected from collectors.
 """
 
-import math
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Optional
 from collections import defaultdict
-from datetime import datetime
 
 import numpy as np
 

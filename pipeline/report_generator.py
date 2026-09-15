@@ -11,7 +11,7 @@ import math
 import statistics
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 # --- stats ---
@@ -125,10 +125,10 @@ def generate_report(
     # --- report.md ---
     md_lines: List[str] = []
     md_lines.append(
-        f"# Relatório — {sim.get('name','Simulação')} (`{sim.get('type','generic')}`)"
+        f"# Relatório — {sim.get('name', 'Simulação')} (`{sim.get('type', 'generic')}`)"
     )
     md_lines.append(
-        f"\n_Gerado em {datetime.now(timezone.utc).isoformat()} | id={sim.get('id','-')}_\n"
+        f"\n_Gerado em {datetime.now(timezone.utc).isoformat()} | id={sim.get('id', '-')}_\n"
     )
     if params:
         md_lines.append("## Parâmetros\n")
@@ -152,7 +152,8 @@ def generate_report(
         md_lines.append("|---|---|---|---|---|---|---|---|---|")
         for k, s in stats.items():
             md_lines.append(
-                f"| {k} | {s['count']} | {s['mean']} | {s['median']} | {s['std']} | {s['min']} | {s['max']} | {s['p95']} |"
+                f"| {k} | {s['count']} | {s['mean']} | {s['median']} |"
+                f" {s['std']} | {s['min']} | {s['max']} | {s['p95']} |"
             )
         md_lines.append("")
         # gráficos
@@ -173,12 +174,22 @@ def generate_report(
 
     # --- report.html ---
     # converte md simples para html (sem libs)
-    html_body = f"<h1>Relatório — {html.escape(str(sim.get('name','Simulação')))} <code>{html.escape(str(sim.get('type','generic')))}</code></h1>"
-    html_body += f"<p><em>Gerado em {html.escape(datetime.now(timezone.utc).isoformat())} | id={html.escape(str(sim.get('id','-')))}</em></p>"
+    sim_name = html.escape(str(sim.get("name", "Simulação")))
+    sim_type = html.escape(str(sim.get("type", "generic")))
+    html_body = f"<h1>Relatório — {sim_name} <code>{sim_type}</code></h1>"
+    gen_stamp = html.escape(datetime.now(timezone.utc).isoformat())
+    gen_id = html.escape(str(sim.get("id", "-")))
+    html_body += f"<p><em>Gerado em {gen_stamp} | id={gen_id}</em></p>"
     if params:
-        html_body += "<h2>Parâmetros</h2><table border='1' cellpadding='6' cellspacing='0'><tr><th>parâmetro</th><th>valor</th></tr>"
+        html_body += (
+            "<h2>Parâmetros</h2><table border='1' cellpadding='6'"
+            " cellspacing='0'><tr><th>parâmetro</th><th>valor</th></tr>"
+        )
         for k, v in params.items():
-            html_body += f"<tr><td><code>{html.escape(str(k))}</code></td><td><code>{html.escape(str(v))}</code></td></tr>"
+            html_body += (
+                f"<tr><td><code>{html.escape(str(k))}</code></td>"
+                f"<td><code>{html.escape(str(v))}</code></td></tr>"
+            )
         html_body += "</table>"
     if metrics:
         html_body += "<h2>Métricas</h2><table border='1' cellpadding='6'><tr><th>métrica</th><th>valor</th></tr>"
@@ -188,9 +199,17 @@ def generate_report(
             )
         html_body += "</table>"
     if stats:
-        html_body += "<h2>Estatísticas por série</h2><table border='1' cellpadding='6'><tr><th>série</th><th>count</th><th>mean</th><th>median</th><th>std</th><th>min</th><th>max</th><th>p95</th></tr>"
+        html_body += (
+            "<h2>Estatísticas por série</h2><table border='1' cellpadding='6'>"
+            "<tr><th>série</th><th>count</th><th>mean</th><th>median</th>"
+            "<th>std</th><th>min</th><th>max</th><th>p95</th></tr>"
+        )
         for k, s in stats.items():
-            html_body += f"<tr><td>{html.escape(k)}</td><td>{s['count']}</td><td>{s['mean']}</td><td>{s['median']}</td><td>{s['std']}</td><td>{s['min']}</td><td>{s['max']}</td><td>{s['p95']}</td></tr>"
+            html_body += (
+                f"<tr><td>{html.escape(k)}</td><td>{s['count']}</td>"
+                f"<td>{s['mean']}</td><td>{s['median']}</td><td>{s['std']}</td>"
+                f"<td>{s['min']}</td><td>{s['max']}</td><td>{s['p95']}</td></tr>"
+            )
         html_body += "</table>"
         for k, vals in series.items():
             html_body += f"<h3>{html.escape(k)}</h3>"
@@ -206,9 +225,18 @@ def generate_report(
             )
     if state.get("notes"):
         html_body += f"<h2>Notas</h2><p>{html.escape(str(state['notes']))}</p>"
-    html_doc = f"""<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Relatório {html.escape(str(sim.get('name','')))}</title>
-    <style>body{{font-family: ui-sans,system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;}} pre{{background:#f6f8fa; padding:12px; overflow:auto;}} table{{border-collapse:collapse;}} th{{background:#eee;}}</style>
-    </head><body>{html_body}<hr><small>Gerado por pipeline/report_generator.py</small></body></html>"""
+    title = html.escape(str(sim.get("name", "")))
+    html_doc = (
+        f'<!doctype html><html lang="pt"><head><meta charset="utf-8">'
+        f"<title>Relatório {title}</title>\n"
+        "    <style>body{font-family:ui-sans,system-ui,sans-serif;"
+        "max-width:900px;margin:2rem auto;padding:0 1rem;}"
+        "pre{background:#f6f8fa;padding:12px;overflow:auto;}"
+        "table{border-collapse:collapse;}th{background:#eee;}</style>\n"
+        f"    </head><body>{html_body}<hr>"
+        "<small>Gerado por pipeline/report_generator.py</small>"
+        "</body></html>"
+    )
     html_path = out_dir / f"{name}.html"
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_doc)
@@ -217,7 +245,7 @@ def generate_report(
 
 
 if __name__ == "__main__":
-    import math, random
+    import random
 
     demo = {
         "simulation": {"id": 1, "type": "sir", "name": "Demo SIR 200"},

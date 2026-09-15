@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import os
-import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -98,7 +97,7 @@ class AuditLogger:
 
 
 if __name__ == "__main__":
-    lg = AuditLogger("/tmp/test_audit.log")
+    lg = AuditLogger("/tmp/test_audit.log")  # nosec B108 -- demo path only
     lg.log(
         actor="alice", action="create_sim", resource="sim:1", details={"type": "sir"}
     )

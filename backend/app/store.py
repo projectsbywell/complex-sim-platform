@@ -91,10 +91,13 @@ class JsonFileBackend(StorageBackend):
                         path,
                     )
                 except Exception as exc:  # corrupt file: quarantine and reset
-                    backup = path.with_suffix(f".corrupt-{int(time.time())}.json")
+                    backup: Optional[Path] = path.with_suffix(
+                        f".corrupt-{int(time.time())}.json"
+                    )
                     try:
+                        assert backup is not None
                         path.rename(backup)
-                    except OSError:
+                    except (OSError, AssertionError):
                         backup = None
                     self._collections[collection] = {}
                     logger.error(

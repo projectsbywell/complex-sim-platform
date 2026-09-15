@@ -118,7 +118,7 @@ def verify_csrf(token: str, _unused: Optional[str] = None) -> bool:
 # --- Security Headers ---
 
 security_headers: Dict[str, str] = {
-    "Content-Security-Policy": "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",  # noqa: E501
     "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
     "X-Frame-Options": "DENY",
     "X-Content-Type-Options": "nosniff",

@@ -486,7 +486,7 @@ class BioEngine(_BaseMockEngine):
             self._init()
 
 
-_MOCK_ENGINES: dict[str, type] = {
+_MOCK_ENGINES: dict[str, type[_BaseMockEngine]] = {
     cls.KIND: cls
     for cls in (ParticlesEngine, FluidsEngine, PhysicsEngine, NeuralEngine, BioEngine)
 }
@@ -896,7 +896,8 @@ class SimulationService:
     def report(self, sim_id: str) -> dict:
         sim = self.get(sim_id)
         state = sim.state
-        history = state.get("history") if isinstance(state.get("history"), list) else []
+        _raw_history = state.get("history")
+        history: list[Any] = _raw_history if isinstance(_raw_history, list) else []
 
         metrics: list[str] = []
         if history and isinstance(history[0], dict):
@@ -1011,7 +1012,7 @@ def _flatten_numbers(value: Any) -> list[float]:
     return out
 
 
-def _describe(values: list[float]) -> dict[str, float]:
+def _describe(values: list[float]) -> dict[str, Any]:
     """Lightweight numeric summary without pandas."""
     n = len(values)
     if n == 0:

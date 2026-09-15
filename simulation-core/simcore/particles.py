@@ -28,12 +28,12 @@ seed : int | None
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .base import Simulatable, Vec2, clamp, seed_rng
+from .base import Simulatable, seed_rng
 
 _DEFAULTS: Dict[str, Any] = {
     "n": 100,

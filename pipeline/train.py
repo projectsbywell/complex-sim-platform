@@ -9,7 +9,7 @@ import json
 import os
 import time
 from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
 
 import numpy as np
 

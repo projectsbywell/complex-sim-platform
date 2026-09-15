@@ -9,7 +9,6 @@ Executes each simulation for 50 steps, serialises the final state to
 
 from __future__ import annotations
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -18,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from simcore import SimulationEngine, save_json  # noqa: E402
-from simcore.export import export_csv, export_json  # noqa: E402
+from simcore.export import export_csv  # noqa: E402
 
 STEPS = 50
 DATA_DIR = Path(__file__).resolve().parent / "examples-data"
@@ -150,11 +149,10 @@ def main() -> None:
     for _ in range(STEPS):
         eng_n.step(0.0)
 
-    preds_before = eng_n.get_state()
     # Actually train
     neural_sim = eng_n._sim  # access underlying sim
-    history = neural_sim.train(X, y, epochs=STEPS, lr=0.05)
-    preds = neural_sim.predict(X)
+    history = neural_sim.train(X, y, epochs=STEPS, lr=0.05)  # type: ignore[attr-defined]
+    preds = neural_sim.predict(X)  # type: ignore[attr-defined]
     print(f"  XOR predictions after {STEPS} epochs:")
     for inp, pred, target in zip(X, preds, y):
         print(f"    {inp} -> {pred[0]:.4f}  (target {target[0]:.0f})")
@@ -163,7 +161,7 @@ def main() -> None:
 
     # Save neural state
     save_json(eng_n.get_state(), DATA_DIR / "neural_state.json")
-    print(f"  Saved: neural_state.json")
+    print("  Saved: neural_state.json")
     print()
 
     # --- Other simulations ---
@@ -175,15 +173,15 @@ def main() -> None:
         print("=" * 60)
 
         t0 = time.perf_counter()
-        eng = SimulationEngine(name, params)
+        eng = SimulationEngine(name, params)  # type: ignore[arg-type]
 
         # Fluids: inject some density/velocity
         if name == "fluids":
             sim_fluid = eng._sim
             for xi in range(10, 20):
                 for yi in range(10, 20):
-                    sim_fluid.add_density(xi, yi, 10.0)
-                    sim_fluid.add_velocity(xi, yi, 2.0, 0.5)
+                    sim_fluid.add_density(xi, yi, 10.0)  # type: ignore[attr-defined]
+                    sim_fluid.add_velocity(xi, yi, 2.0, 0.5)  # type: ignore[attr-defined]
 
         eng.run(steps=STEPS, dt=dt)
         elapsed = time.perf_counter() - t0
