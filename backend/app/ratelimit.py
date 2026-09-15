@@ -82,15 +82,29 @@ class RateLimitMiddleware:
     # -- helpers -----------------------------------------------------------
     @staticmethod
     def _client_ip(scope) -> str:
+        """IP para rate-limit sem confiar em header forjável.
+
+        X-Forwarded-For vindo do cliente direto é ignorado (bypass clássico).
+        Atrás de túnel/proxy (cliente direto = loopback), usa o ÚLTIMO XFF
+        (anexado pelo proxy, não forjável) ou CF-Connecting-IP/X-Real-IP.
+        """
+        headers: dict[bytes, str] = {}
         for name, value in scope.get("headers", []):
-            if name.lower() == b"x-forwarded-for":
-                first = value.decode("latin-1", "replace").split(",")[0].strip()
-                if first:
-                    return first
+            headers.setdefault(
+                name.lower(), value.decode("latin-1", "replace")
+            )
         client = scope.get("client")
-        if client:
-            return str(client[0])
-        return "unknown"
+        direct = str(client[0]) if client else "unknown"
+        if direct in ("127.0.0.1", "::1", "unknown"):
+            for header in ("cf-connecting-ip", "x-real-ip"):
+                value = headers.get(header, "").split(",")[0].strip()
+                if value:
+                    return value
+            xff = headers.get("x-forwarded-for", "")
+            parts = [p.strip() for p in xff.split(",") if p.strip()]
+            if parts:
+                return parts[-1]
+        return direct
 
     async def _deny(self, scope, send, ip: str, path: str) -> None:
         logger.warning(

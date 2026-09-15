@@ -154,7 +154,11 @@ def step_simulation(
     except KeyError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Simulation not found")
     except WorkLimitError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"{exc} (work budget exceeded; reduza steps ou dt)",
+            headers={"retry-after": "60"},
+        )
     return {
         "state": state,
         "steps_done": steps_done,

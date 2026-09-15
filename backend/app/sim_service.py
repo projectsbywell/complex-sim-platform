@@ -583,15 +583,19 @@ class _RealEngineAdapter:
         self.params = {**self.params, **p}
 
     def work_estimate(self) -> int:
+        # Motores reais (numpy/Jacobi) custam ~10x o mock: inclui iterações
+        # do solver (ex: fluids usa `size`, não n/width/grid_size).
         n = (
             self.params.get("n")
             or self.params.get("width")
             or self.params.get("grid_size")
+            or self.params.get("size")
+            or self.params.get("height")
         )
         if n:
             n = int(n)
-            return n * n
-        return 1024
+            return n * n * 10
+        return 1024 * 10
 
     @classmethod
     def merge_defaults(cls, params: Optional[dict]) -> dict[str, Any]:

@@ -10,7 +10,7 @@ URL_FILE=docs/LIVE_URL.md
 start_api() {
   pgrep -f "uvicorn app.main:app" >/dev/null || {
     echo "[keep] iniciando API..."
-    (cd backend && nohup python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 >"$API_LOG" 2>&1 &)
+    (cd backend && nohup python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-server-header >"$API_LOG" 2>&1 &)
     sleep 5
   }
 }

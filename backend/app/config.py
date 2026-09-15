@@ -6,9 +6,15 @@ production. Values mirror ``.env.example``.
 
 from __future__ import annotations
 
+import logging
 import os
+import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
+
+logger = logging.getLogger("complex_sim.config")
+
+_DEFAULT_SECRET = "dev-insecure-secret-change-me"
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -106,3 +112,12 @@ class Settings:
 
 
 settings = Settings()
+
+if settings.secret_key == _DEFAULT_SECRET:
+    # Sem SECRET_KEY no ambiente, ninguém além deste processo pode forjar JWT:
+    # gera chave efêmera (tokens morrem no restart) em vez de usar default público.
+    object.__setattr__(settings, "secret_key", secrets.token_urlsafe(48))
+    logger.warning(
+        "SECRET_KEY ausente: usando chave efêmera gerada no startup "
+        "(defina SECRET_KEY no ambiente para sessões persistentes)"
+    )

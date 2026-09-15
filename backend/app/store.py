@@ -9,6 +9,7 @@ set — no other module talks to persistence directly.
 
 from __future__ import annotations
 
+import html
 import json
 import logging
 import os
@@ -23,6 +24,20 @@ from typing import Any, Optional
 from .config import settings
 
 logger = logging.getLogger("complex_sim.store")
+
+
+def _escape_params(value: Any) -> Any:
+    """Output-encoding anti-XSS: escapa strings de params nas respostas JSON.
+
+    O dado bruto segue intacto no store; só a serialização via to_dict escapa.
+    """
+    if isinstance(value, str):
+        return html.escape(value)
+    if isinstance(value, dict):
+        return {k: _escape_params(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_escape_params(v) for v in value]
+    return value
 
 
 class StorageError(RuntimeError):
@@ -211,7 +226,7 @@ class Simulation:
         payload: dict[str, Any] = {
             "id": self.id,
             "kind": self.kind,
-            "params": self.params,
+            "params": _escape_params(self.params),
             "owner": self.owner,
             "steps_done": self.steps_done,
             "created_at": self.created_at,

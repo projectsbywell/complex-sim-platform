@@ -231,6 +231,7 @@ class SecurityHeadersMiddleware:
         "X-XSS-Protection": "1; mode=block",
         "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
         "Cross-Origin-Opener-Policy": "same-origin",
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
     }
     _API_CSP = (
         "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; "
