@@ -90,9 +90,7 @@ class RateLimitMiddleware:
         """
         headers: dict[bytes, str] = {}
         for name, value in scope.get("headers", []):
-            headers.setdefault(
-                name.lower(), value.decode("latin-1", "replace")
-            )
+            headers.setdefault(name.lower(), value.decode("latin-1", "replace"))
         client = scope.get("client")
         direct = str(client[0]) if client else "unknown"
         if direct in ("127.0.0.1", "::1", "unknown"):
